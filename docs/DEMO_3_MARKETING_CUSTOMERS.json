@@ -1,0 +1,41 @@
+[
+  {
+    "name": "Anh Hoàng Marketing",
+    "phone": "0905000101",
+    "zalo": "0905000101",
+    "email": "hoang.demo@example.com",
+    "stage": "Lead mới",
+    "emotion": "Tò mò",
+    "trustScore": 52,
+    "confirmedNeeds": "Khách Marketing mới, đã để lại thông tin tìm hiểu.",
+    "workingHypotheses": "Có thể muốn xem giá và sản phẩm trước khi trao đổi sâu.",
+    "nextAction": "Gọi lần đầu để xác nhận nhu cầu.",
+    "followUpDate": "2026-06-28"
+  },
+  {
+    "name": "Chị Ngọc Marketing",
+    "phone": "0905000102",
+    "zalo": "0905000102",
+    "email": "ngoc.demo@example.com",
+    "stage": "Đã kết nối Zalo",
+    "emotion": "Quan tâm",
+    "trustScore": 64,
+    "confirmedNeeds": "Quan tâm sản phẩm phù hợp gia đình.",
+    "workingHypotheses": "Cần thêm niềm tin và thông tin ngắn gọn.",
+    "nextAction": "Follow-up phản hồi sau Zalo.",
+    "followUpDate": "2026-06-29"
+  },
+  {
+    "name": "Anh Đức Marketing",
+    "phone": "0905000103",
+    "zalo": "0905000103",
+    "email": "duc.demo@example.com",
+    "stage": "Đang follow-up",
+    "emotion": "Cân nhắc",
+    "trustScore": 58,
+    "confirmedNeeds": "Quan tâm đầu tư nhưng chưa rõ tiêu chí.",
+    "workingHypotheses": "Có thể đang so sánh với kênh đầu tư khác.",
+    "nextAction": "Gọi xác nhận tiêu chí đầu tư.",
+    "followUpDate": "2026-06-30"
+  }
+]

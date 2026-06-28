@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.*
+backups/
+migrated-data/
+POST_MIGRATION_DATA_AUDIT.md
+*.log

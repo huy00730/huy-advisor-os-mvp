@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Nguyễn Văn A",
+    "phone": "0900000001",
+    "zalo": "0900000001",
+    "email": "",
+    "stage": "Lead mới",
+    "emotion": "Chưa rõ",
+    "trustScore": 50,
+    "confirmedNeeds": "Chưa xác nhận.",
+    "workingHypotheses": "Khách Marketing mới, cần gọi xác nhận nhu cầu.",
+    "nextAction": "Gọi xác nhận nhu cầu.",
+    "followUpDate": "2026-06-29"
+  },
+  {
+    "name": "Trần Thị B",
+    "phone": "0900000002",
+    "zalo": "0900000002",
+    "email": "",
+    "stage": "Lead mới",
+    "emotion": "Chưa rõ",
+    "trustScore": 50,
+    "confirmedNeeds": "Chưa xác nhận.",
+    "workingHypotheses": "Khách Marketing mới, cần gọi xác nhận nhu cầu.",
+    "nextAction": "Gọi xác nhận nhu cầu.",
+    "followUpDate": "2026-06-29"
+  }
+]
