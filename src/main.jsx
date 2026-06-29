@@ -1082,6 +1082,28 @@ function normalizeTimelineEvent(item = {}) {
   }
 }
 
+function buildDiagnosisFromReview(review = {}) {
+  const interest = Array.isArray(review.diagnosisInterest) ? review.diagnosisInterest : []
+  return {
+    customerStage: review.diagnosisCustomerStage || '',
+    barrier: review.diagnosisBarrier || '',
+    trustScore: review.diagnosisTrustScore === '' || review.diagnosisTrustScore == null ? '' : Number(review.diagnosisTrustScore),
+    decisionMaker: review.diagnosisDecisionMaker || '',
+    interest,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+function hasDiagnosisData(diagnosis = {}) {
+  return Boolean(
+    hasMeaningfulValue(diagnosis.customerStage) ||
+    hasMeaningfulValue(diagnosis.barrier) ||
+    hasMeaningfulValue(diagnosis.decisionMaker) ||
+    (Array.isArray(diagnosis.interest) && diagnosis.interest.length) ||
+    diagnosis.trustScore !== '' && diagnosis.trustScore != null && !Number.isNaN(Number(diagnosis.trustScore))
+  )
+}
+
 function sortTimelineNewestFirst(timeline = []) {
   return [...timeline].map(normalizeTimelineEvent).sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')))
 }
@@ -1092,6 +1114,8 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
   const followUpDate = review.followUpDate || customer.followUpDate
   const reviewDealSignals = buildDealSignalsFromReview(review)
   const reviewSalesDNA = buildSalesDNAFromReview(review, customer)
+  const reviewDiagnosis = buildDiagnosisFromReview(review)
+  const shouldSaveDiagnosis = hasDiagnosisData(reviewDiagnosis)
   const hasLongTermMemoryNote = normalizeMemoryList(review.longTermMemoryNote).length > 0
   const timelineItem = {
     id: `timeline-${Date.now()}`,
@@ -1114,6 +1138,28 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     salesDNA: reviewSalesDNA,
     memoryUpdated: hasLongTermMemoryNote,
   }
+  const diagnosisTimelineItem = shouldSaveDiagnosis ? {
+    id: `timeline-diagnosis-${Date.now()}`,
+    isoDate: todayIso,
+    createdAt: new Date().toISOString(),
+    date: '29/06',
+    type: 'Diagnosis',
+    eventType: 'Ghi chú',
+    title: 'Diagnosis Updated',
+    summary: [
+      reviewDiagnosis.customerStage && `Stage: ${reviewDiagnosis.customerStage}`,
+      reviewDiagnosis.barrier && `Barrier: ${reviewDiagnosis.barrier}`,
+      reviewDiagnosis.decisionMaker && `Decision Maker: ${reviewDiagnosis.decisionMaker}`,
+      reviewDiagnosis.interest?.length ? `Interest: ${reviewDiagnosis.interest.join(', ')}` : '',
+    ].filter(Boolean).join(' · ') || 'Đã cập nhật Diagnosis.',
+    confirmed: 'Diagnosis Updated.',
+    next: `${nextAction} · ${followUpDate || 'Chưa chọn ngày'}`,
+    nextAction,
+    followUp: followUpDate || 'Chưa chọn ngày',
+    detail: 'Diagnosis Updated.',
+    result: 'Diagnosis Updated',
+    diagnosis: reviewDiagnosis,
+  } : null
 
   updateCustomer(customer.id, (current) => {
     const mergedDealSignals = {
@@ -1121,13 +1167,18 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
       ...(current.dealSignals || {}),
       ...Object.fromEntries(Object.entries(reviewDealSignals).map(([key, value]) => [key, Boolean(current.dealSignals?.[key] || value)])),
     }
-    const nextTimeline = sortTimelineNewestFirst([timelineItem, ...(current.timeline || [])])
+    const nextTimeline = sortTimelineNewestFirst([...(diagnosisTimelineItem ? [diagnosisTimelineItem] : []), timelineItem, ...(current.timeline || [])])
     const dealStatus = calculateDealScore({ ...current, dealSignals: mergedDealSignals, timeline: nextTimeline })
     const nextCustomerMemory = mergeCustomerMemoryFromReview(current, review)
+    const nextDiagnosis = shouldSaveDiagnosis ? {
+      ...(current.diagnosis || {}),
+      ...reviewDiagnosis,
+    } : current.diagnosis
 
     return {
       ...current,
       stage: review.result === 'Hẹn gặp' ? 'Có hẹn' : current.stage,
+      trustScore: shouldSaveDiagnosis && reviewDiagnosis.trustScore !== '' ? reviewDiagnosis.trustScore : current.trustScore,
       confirmedNeeds: review.need || current.confirmedNeeds,
       workingHypotheses: review.hypothesis || current.workingHypotheses,
       nextAction,
@@ -1143,6 +1194,7 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
       },
       customerMemory: nextCustomerMemory,
       timeline: nextTimeline,
+      diagnosis: nextDiagnosis,
       dealSignals: mergedDealSignals,
       dealScore: dealStatus.score,
       dealScoreReason: dealStatus.reason,
@@ -1632,6 +1684,10 @@ function App() {
 
 const stageOptions = ['Lead mới', 'Đã kết nối Zalo', 'Đã xem tài liệu', 'Đang follow-up', 'Đang cân nhắc', 'Có hẹn', 'Đàm phán', 'Reconnect']
 const emotionOptions = ['Chưa rõ', 'Tò mò', 'Quan tâm', 'Cần niềm tin', 'Lo rủi ro', 'Cân nhắc', 'So sánh', 'Im lặng', 'Tin tưởng']
+const diagnosisCustomerStages = ['Tò mò', 'Quan tâm', 'So sánh', 'Chờ', 'Không phù hợp']
+const diagnosisBarriers = ['Giá', 'Tài chính', 'Pháp lý', 'Gia đình', 'Niềm tin', 'Chưa đủ thông tin', 'Chưa thấy nhu cầu']
+const diagnosisDecisionMakers = ['Chính khách', 'Vợ', 'Chồng', 'Gia đình', 'Công ty']
+const diagnosisInterests = ['Ven sông', 'Đầu tư', 'Nghỉ dưỡng', 'Pháp lý', 'Thiết kế', 'Tiện ích', 'Khai thác', 'Giá']
 
 const memorySalesSections = [
   ['people', '👤 Con người', 'Chủ quán cà phê.\\nRất thân thiện.\\nÍt nói.'],
@@ -2616,6 +2672,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const timelineEvents = sortTimelineNewestFirst(customer.timeline || [])
   const latestInteraction = timelineEvents[0]
   const journeyIndex = getCustomer360JourneyIndex(customer, timelineEvents)
+  const diagnosis = customer.diagnosis || {}
   const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
   const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
   const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
@@ -2740,6 +2797,10 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
             <InfoRow label="Nghề nghiệp" value={overviewProfession || 'Chưa rõ'} />
             <InfoRow label="Gia đình" value={overviewFamily} />
             <InfoRow label="Điều cần nhớ" value={overviewMemory || 'Chưa ghi nhận điều cần nhớ lâu dài.'} highlight />
+            <InfoRow label="Customer Stage" value={diagnosis.customerStage || 'Chưa đánh giá'} />
+            <InfoRow label="Barrier" value={diagnosis.barrier || 'Chưa đánh giá'} />
+            <InfoRow label="Decision Maker" value={diagnosis.decisionMaker || customer.snapshot?.decisionMaker || 'Chưa rõ'} />
+            <InfoRow label="Interest" value={formatCustomer360Value(diagnosis.interest, 'Chưa đánh giá')} highlight />
           </div>
         </article>
 
@@ -3002,6 +3063,11 @@ function CallReview({ customer, askedCount, onSave }) {
     followUpQuick: 'Mai',
     salesDNASelected: [],
     salesDNANote: '',
+    diagnosisCustomerStage: customer.diagnosis?.customerStage || 'Quan tâm',
+    diagnosisBarrier: customer.diagnosis?.barrier || 'Niềm tin',
+    diagnosisTrustScore: customer.diagnosis?.trustScore ?? customer.trustScore ?? 50,
+    diagnosisDecisionMaker: customer.diagnosis?.decisionMaker || 'Chính khách',
+    diagnosisInterest: Array.isArray(customer.diagnosis?.interest) ? customer.diagnosis.interest : ['Đầu tư'],
     longTermMemoryNote: '',
   })
 
@@ -3017,6 +3083,18 @@ function CallReview({ customer, askedCount, onSave }) {
         salesDNASelected: selected.includes(type)
           ? selected.filter((item) => item !== type)
           : [...selected, type],
+      }
+    })
+  }
+
+  const toggleDiagnosisInterest = (interest) => {
+    setForm((current) => {
+      const selected = Array.isArray(current.diagnosisInterest) ? current.diagnosisInterest : []
+      return {
+        ...current,
+        diagnosisInterest: selected.includes(interest)
+          ? selected.filter((item) => item !== interest)
+          : [...selected, interest],
       }
     })
   }
@@ -3176,6 +3254,57 @@ function CallReview({ customer, askedCount, onSave }) {
           <strong>Checklist: Đã hỏi {askedCount}/5 câu Discovery.</strong>
           <span>Knowledge: {form.knowledge} · Decision: {form.decision}</span>
         </div>
+        <section className="diagnosis-review-block">
+          <div className="card-head">
+            <h3>🩺 Diagnosis</h3>
+            <p>Chuẩn hóa đánh giá khách sau cuộc gọi.</p>
+          </div>
+          <div className="diagnosis-grid">
+            <QuickChoiceGroup
+              label="Customer Stage"
+              options={diagnosisCustomerStages}
+              value={form.diagnosisCustomerStage}
+              onChange={(value) => updateField('diagnosisCustomerStage', value)}
+            />
+            <QuickChoiceGroup
+              label="Barrier"
+              options={diagnosisBarriers}
+              value={form.diagnosisBarrier}
+              onChange={(value) => updateField('diagnosisBarrier', value)}
+            />
+            <label className="diagnosis-score-field">
+              <span>Trust Score</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={form.diagnosisTrustScore}
+                onChange={(event) => updateField('diagnosisTrustScore', event.target.value)}
+              />
+            </label>
+            <QuickChoiceGroup
+              label="Decision Maker"
+              options={diagnosisDecisionMakers}
+              value={form.diagnosisDecisionMaker}
+              onChange={(value) => updateField('diagnosisDecisionMaker', value)}
+            />
+            <section className="quick-choice-block diagnosis-interest-block">
+              <span>Interest</span>
+              <div className="quick-choice-row">
+                {diagnosisInterests.map((interest) => (
+                  <button
+                    type="button"
+                    className={form.diagnosisInterest.includes(interest) ? 'is-selected' : ''}
+                    key={interest}
+                    onClick={() => toggleDiagnosisInterest(interest)}
+                  >
+                    {form.diagnosisInterest.includes(interest) ? '✓' : '□'} {interest}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        </section>
         <section className="long-term-memory-note">
           <h3>💡 Điều cần nhớ</h3>
           <p>{`Ví dụ:

@@ -989,6 +989,67 @@ button {
   resize: vertical;
 }
 
+.diagnosis-review-block {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid rgba(29, 139, 102, .22);
+  border-radius: 20px;
+  background: #f0f7f1;
+}
+
+.diagnosis-review-block .card-head {
+  margin: 0;
+}
+
+.diagnosis-review-block h3 {
+  margin: 0;
+  color: #173f39;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.diagnosis-review-block .card-head p {
+  margin: 0;
+  color: #68766f;
+  font-weight: 850;
+}
+
+.diagnosis-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.diagnosis-score-field {
+  display: grid;
+  gap: 9px;
+}
+
+.diagnosis-score-field span {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.diagnosis-score-field input {
+  width: 140px;
+  min-height: 48px;
+  border: 1px solid #dfe5dc;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fbfbf7;
+  color: #173f39;
+  font: inherit;
+  font-weight: 850;
+}
+
+.diagnosis-interest-block {
+  padding-top: 2px;
+}
+
 .sales-dna-count,
 .flow-sales-dna-widget,
 .daily-sales-dna-card {
