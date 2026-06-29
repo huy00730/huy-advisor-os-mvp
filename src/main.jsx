@@ -1033,6 +1033,59 @@ function summarizeSalesDNA(items) {
   }, {})
 }
 
+function eventTypeLabel(type = '') {
+  const lower = String(type).toLowerCase()
+  if (lower.includes('call') || lower.includes('cuộc gọi')) return 'Gọi'
+  if (lower.includes('zalo')) return 'Zalo'
+  if (lower.includes('meeting') || lower.includes('gặp') || lower.includes('hẹn')) return 'Gặp'
+  if (lower.includes('tài liệu')) return 'Gửi tài liệu'
+  if (lower.includes('reactivation')) return 'Reactivate'
+  if (lower.includes('lead')) return 'Lead'
+  if (lower.includes('note') || lower.includes('ghi chú')) return 'Ghi chú'
+  return type || 'Tương tác'
+}
+
+function timelineTimestamp(item = {}) {
+  if (item.createdAt) return item.createdAt
+  if (item.isoDate) return `${item.isoDate}T09:00:00`
+  return `${todayIso}T09:00:00`
+}
+
+function formatTimelineDateTime(item = {}) {
+  const timestamp = timelineTimestamp(item)
+  const parsed = new Date(timestamp)
+  if (!Number.isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0')
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    const hour = String(parsed.getHours()).padStart(2, '0')
+    const minute = String(parsed.getMinutes()).padStart(2, '0')
+    return `${day}/${month} · ${hour}:${minute}`
+  }
+  return item.date || 'Chưa rõ'
+}
+
+function normalizeTimelineEvent(item = {}) {
+  const type = eventTypeLabel(item.eventType || item.type)
+  const summary = item.summary || item.confirmed || 'Chưa có tóm tắt.'
+  const nextAction = item.nextAction || item.next || 'Chưa có Next Action.'
+  const followUp = item.followUp || item.followUpDate || String(nextAction).split('·')[1]?.trim() || 'Chưa có follow-up.'
+  return {
+    ...item,
+    timestamp: timelineTimestamp(item),
+    displayDateTime: formatTimelineDateTime(item),
+    displayType: type,
+    title: item.title || `${type}: ${item.result || 'Đã cập nhật quan hệ khách hàng'}`,
+    summary,
+    nextAction,
+    followUp,
+    detail: item.detail || item.confirmed || summary,
+  }
+}
+
+function sortTimelineNewestFirst(timeline = []) {
+  return [...timeline].map(normalizeTimelineEvent).sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')))
+}
+
 function saveReviewToCustomer(customer, review, updateCustomer) {
   const confirmedSummary = review.confirmedSummary || review.customerSaid || 'Đã lưu nhật ký cuộc gọi.'
   const nextAction = review.nextAction || customer.nextAction
@@ -1043,10 +1096,17 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
   const timelineItem = {
     id: `timeline-${Date.now()}`,
     isoDate: todayIso,
+    createdAt: new Date().toISOString(),
     date: '29/06',
     type: 'Call Review',
+    eventType: 'Gọi',
+    title: `Gọi: ${review.result || 'Đã lưu kết quả cuộc gọi'}`,
+    summary: confirmedSummary,
     confirmed: hasLongTermMemoryNote ? `${confirmedSummary} · Đã cập nhật Điều cần nhớ.` : confirmedSummary,
     next: `${nextAction} · ${followUpDate || 'Chưa chọn ngày'}`,
+    nextAction,
+    followUp: followUpDate || 'Chưa chọn ngày',
+    detail: review.customerSaid || confirmedSummary,
     knowledge: review.knowledge,
     decision: review.decision,
     result: review.result,
@@ -1061,7 +1121,7 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
       ...(current.dealSignals || {}),
       ...Object.fromEntries(Object.entries(reviewDealSignals).map(([key, value]) => [key, Boolean(current.dealSignals?.[key] || value)])),
     }
-    const nextTimeline = [timelineItem, ...(current.timeline || [])].sort((a, b) => String(b.isoDate || '').localeCompare(String(a.isoDate || '')))
+    const nextTimeline = sortTimelineNewestFirst([timelineItem, ...(current.timeline || [])])
     const dealStatus = calculateDealScore({ ...current, dealSignals: mergedDealSignals, timeline: nextTimeline })
     const nextCustomerMemory = mergeCustomerMemoryFromReview(current, review)
 
@@ -2396,8 +2456,10 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [saveNotice, setSaveNotice] = useState('')
   const [isEditingSnapshot, setIsEditingSnapshot] = useState(false)
   const [isEditingMemory, setIsEditingMemory] = useState(false)
+  const [selectedTimelineEvent, setSelectedTimelineEvent] = useState(null)
   const dealEngine = calculateDealScore(customer)
   const customerMemory = buildCustomerMemory(customer)
+  const timelineEvents = sortTimelineNewestFirst(customer.timeline || [])
   const [memoryForm, setMemoryForm] = useState({
     confirmed: { ...customerMemory.confirmed },
     people: customerMemory.people,
@@ -2593,18 +2655,20 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
 
         <article className="card timeline-card">
           <div className="card-head">
-            <h2>🕘 Timeline</h2>
+            <h2>📖 Nhật ký quan hệ</h2>
           </div>
           <div className="timeline-list">
-            {customer.timeline.map((item, index) => (
-              <section className="timeline-item" key={`${item.date}-${item.type}-${index}`}>
-                <time>{item.date}</time>
+            {timelineEvents.map((item, index) => (
+              <button className="timeline-item" key={`${item.id || item.date}-${item.type}-${index}`} onClick={() => setSelectedTimelineEvent(item)}>
+                <time>{item.displayDateTime}</time>
                 <div>
-                  <strong>{item.type}</strong>
-                  <p>{item.confirmed}</p>
-                  <small>Next: {item.next}</small>
+                  <em>{item.displayType}</em>
+                  <strong>{item.title}</strong>
+                  <p>{item.summary}</p>
+                  <small>Next Action: {item.nextAction}</small>
+                  <small>Follow-up: {item.followUp}</small>
                 </div>
-              </section>
+              </button>
             ))}
           </div>
         </article>
@@ -2621,6 +2685,38 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
           </div>
         </article>
       </section>
+
+      {selectedTimelineEvent && (
+        <section className="timeline-detail-overlay" role="dialog" aria-modal="true">
+          <article className="timeline-detail-card">
+            <button className="timeline-detail-close" onClick={() => setSelectedTimelineEvent(null)}>Đóng</button>
+            <p>{selectedTimelineEvent.displayDateTime} · {selectedTimelineEvent.displayType}</p>
+            <h2>{selectedTimelineEvent.title}</h2>
+            <dl>
+              <div>
+                <dt>Nội dung tóm tắt</dt>
+                <dd>{selectedTimelineEvent.summary}</dd>
+              </div>
+              <div>
+                <dt>Chi tiết</dt>
+                <dd>{selectedTimelineEvent.detail}</dd>
+              </div>
+              <div>
+                <dt>Next Action</dt>
+                <dd>{selectedTimelineEvent.nextAction}</dd>
+              </div>
+              <div>
+                <dt>Follow-up</dt>
+                <dd>{selectedTimelineEvent.followUp}</dd>
+              </div>
+              <div>
+                <dt>Knowledge / Decision</dt>
+                <dd>{[selectedTimelineEvent.knowledge, selectedTimelineEvent.decision].filter(Boolean).join(' · ') || 'Chưa ghi nhận.'}</dd>
+              </div>
+            </dl>
+          </article>
+        </section>
+      )}
     </main>
   )
 }

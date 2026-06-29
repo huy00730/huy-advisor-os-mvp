@@ -2185,10 +2185,22 @@ button {
   display: grid;
   grid-template-columns: 70px 1fr;
   gap: 12px;
+  width: 100%;
   padding: 14px;
   border: 1px solid #e2e5dc;
   border-radius: 18px;
   background: #fbfbf7;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.timeline-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(29, 139, 102, .35);
+  box-shadow: 0 14px 28px rgba(23, 63, 57, .08);
 }
 
 .timeline-item time {
@@ -2197,10 +2209,24 @@ button {
   font-weight: 950;
 }
 
+.timeline-item em {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f0f7f1;
+  color: #1d8b66;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+}
+
 .timeline-item strong {
   display: block;
   color: #173f39;
   margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .timeline-item p {
@@ -2210,8 +2236,92 @@ button {
 }
 
 .timeline-item small {
+  display: block;
+  margin-top: 4px;
   color: #68766f;
   font-weight: 800;
+}
+
+.timeline-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(23, 63, 57, .32);
+  backdrop-filter: blur(4px);
+}
+
+.timeline-detail-card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  width: min(720px, 100%);
+  max-height: min(760px, calc(100vh - 40px));
+  overflow: auto;
+  padding: 28px;
+  border-radius: 28px;
+  background: #fbfbf7;
+  box-shadow: 0 28px 80px rgba(23, 63, 57, .24);
+}
+
+.timeline-detail-card > p {
+  margin: 0;
+  color: #9a5c00;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.timeline-detail-card h2 {
+  margin: 0;
+  color: #173f39;
+  font-size: 30px;
+  letter-spacing: -.04em;
+}
+
+.timeline-detail-card dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.timeline-detail-card dl div {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f7f8f3;
+}
+
+.timeline-detail-card dt {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.timeline-detail-card dd {
+  margin: 0;
+  color: #173f39;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.timeline-detail-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffdc6a;
+  color: #173f39;
+  font-weight: 950;
 }
 
 .action-card {
