@@ -1016,6 +1016,51 @@ button {
   font-weight: 850;
 }
 
+.psychology-review-block {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid rgba(23, 63, 57, .18);
+  border-radius: 20px;
+  background: #f7f8f3;
+}
+
+.psychology-review-block .card-head {
+  margin: 0;
+}
+
+.psychology-review-block h3 {
+  margin: 0;
+  color: #173f39;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.psychology-review-block .card-head p {
+  margin: 0;
+  color: #68766f;
+  font-weight: 850;
+}
+
+.psychology-review-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.psychology-review-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.psychology-review-grid span {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
 .diagnosis-grid {
   display: grid;
   gap: 14px;
@@ -1369,6 +1414,109 @@ button {
 
 .backup-controls input {
   display: none;
+}
+
+.knowledge-candidate-center {
+  display: grid;
+  gap: 14px;
+  margin: 14px 0 18px;
+  padding: 18px;
+  border: 1px dashed rgba(217, 138, 36, .44);
+  border-radius: 24px;
+  background: #fffaf0;
+}
+
+.knowledge-candidate-center .card-head {
+  margin-bottom: 0;
+}
+
+.knowledge-candidate-center .card-head p {
+  margin: 0;
+  color: #d98a24;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.knowledge-candidate-center .card-head span,
+.candidate-empty {
+  color: #68766f;
+  font-weight: 900;
+}
+
+.candidate-list {
+  display: grid;
+  gap: 12px;
+}
+
+.candidate-item {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr .9fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid rgba(20, 33, 31, .08);
+  border-radius: 20px;
+  background: white;
+}
+
+.candidate-main,
+.candidate-evidence {
+  display: grid;
+  gap: 6px;
+}
+
+.candidate-main small,
+.candidate-evidence small {
+  color: #6d796f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.candidate-main strong {
+  color: #173f39;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.candidate-main p,
+.candidate-evidence li {
+  color: #47584f;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.candidate-evidence ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.candidate-meta-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.candidate-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.candidate-actions button {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #1d8b66;
+  color: white;
+  font-weight: 950;
+}
+
+.candidate-actions button + button {
+  background: #d98a24;
 }
 
 .migration-status {
@@ -2205,8 +2353,58 @@ button {
 }
 
 .customer360-overview-card,
+.workspace-selector-card,
+.customer-psychology-card,
 .customer360-journey-card {
   grid-column: 1 / -1;
+}
+
+.workspace-selector-card {
+  display: grid;
+  grid-template-columns: .55fr 1.45fr;
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(23, 63, 57, .12);
+  border-radius: 22px;
+  background: #fbfbf7;
+  box-shadow: 0 14px 40px rgba(23, 63, 57, .08);
+}
+
+.workspace-selector-card small {
+  color: #6d796f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.workspace-selector-card h2 {
+  margin: 3px 0 0;
+  color: #173f39;
+  font-size: clamp(20px, 2.4vw, 28px);
+}
+
+.workspace-selector-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+.workspace-selector-options button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #dfe5dc;
+  border-radius: 999px;
+  background: white;
+  color: #173f39;
+  font-weight: 950;
+}
+
+.workspace-selector-options button.is-selected {
+  border-color: rgba(29, 139, 102, .48);
+  background: #1d8b66;
+  color: white;
 }
 
 .customer360-overview-grid,
@@ -2221,6 +2419,166 @@ button {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
+}
+
+.customer-psychology-card {
+  border-color: rgba(23, 63, 57, .16);
+  background: linear-gradient(135deg, #f7f8f3 0%, #eef7f0 100%);
+}
+
+.customer-psychology-card .card-head p {
+  color: #1d8b66;
+  font-weight: 950;
+}
+
+.psychology-grid {
+  display: grid;
+  grid-template-columns: 1.15fr repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.psychology-grid section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(23, 63, 57, .1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .76);
+}
+
+.psychology-grid .psychology-main {
+  background: #173f39;
+  color: white;
+}
+
+.psychology-grid small {
+  color: #6d796f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.psychology-grid .psychology-main small {
+  color: #ffdc6a;
+}
+
+.psychology-grid p,
+.psychology-grid ul {
+  margin: 0;
+}
+
+.psychology-grid p {
+  color: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.psychology-grid ul {
+  display: grid;
+  gap: 7px;
+  padding-left: 18px;
+}
+
+.psychology-grid li {
+  color: #32463f;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.psychology-grid .psychology-main p {
+  color: white;
+}
+
+.athena-conversation-coach {
+  grid-column: 1 / -1;
+}
+
+.athena-question-list {
+  display: grid;
+  gap: 10px;
+}
+
+.athena-question-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(23, 63, 57, .1);
+  border-radius: 16px;
+  background: #fbfbf7;
+}
+
+.athena-question-item p {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.athena-answer-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.athena-answer-buttons button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dfe5dc;
+  border-radius: 999px;
+  background: white;
+  color: #173f39;
+  font-weight: 950;
+}
+
+.athena-answer-buttons button.is-selected {
+  border-color: rgba(29, 139, 102, .5);
+  background: #1d8b66;
+  color: white;
+}
+
+.athena-conversation-status {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 220, 106, .22);
+}
+
+.athena-conversation-status strong {
+  color: #173f39;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.athena-conversation-status span,
+.athena-conversation-status p {
+  color: #47584f;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.workspace-focus-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.workspace-focus-list span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(29, 139, 102, .1);
+  color: #173f39;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.psychology-grid em {
+  color: #47584f;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.35;
 }
 
 .customer360-step {
@@ -3148,6 +3506,14 @@ button {
     font-size: 16px;
   }
 
+  .candidate-item {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .customer-form-grid,
   .snapshot-edit-grid {
     grid-template-columns: 1fr;
@@ -3473,7 +3839,24 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .workspace-selector-card {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-selector-options {
+    justify-content: stretch;
+  }
+
+  .workspace-selector-options button {
+    flex: 1 1 100%;
+    min-height: 48px;
+  }
+
   .recommendation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .psychology-grid {
     grid-template-columns: 1fr;
   }
 

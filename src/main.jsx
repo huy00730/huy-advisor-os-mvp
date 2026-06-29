@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { recommendKnowledgeForCustomer } from './data/knowledgeRegistry.js'
+import { customerPsychologyEngine } from './customerPsychologyEngine.js'
+import { captureKnowledgeCandidates, loadKnowledgeCandidates, updateKnowledgeCandidateStatus } from './knowledgeCandidateEngine.js'
 import './styles.css'
 
 const today = new Intl.DateTimeFormat('vi-VN', {
@@ -522,7 +524,7 @@ function normalizeCustomer(customer, index = 0) {
     nextAction: customer.snapshot?.nextAction || customer.nextAction || customer.action || 'Gọi xác nhận nhu cầu.',
   }
 
-  return {
+  const normalizedCustomer = {
     ...customer,
     id: customer.id || `customer-${index + 1}`,
     customerId: customer.customerId || customer.id || `customer-${index + 1}`,
@@ -565,6 +567,12 @@ function normalizeCustomer(customer, index = 0) {
     dealScoreReason: customer.dealScoreReason || dealStatus.reason,
     dealScoreStatus: customer.dealScoreStatus || dealStatus.status,
     lastScoreUpdate: customer.lastScoreUpdate || dealStatus.updatedAt,
+  }
+  return {
+    ...normalizedCustomer,
+    psychologyProfile: Array.isArray(customer.psychologyProfile?.matchedRules)
+      ? customer.psychologyProfile
+      : customerPsychologyEngine(normalizedCustomer),
   }
 }
 
@@ -1137,6 +1145,12 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     result: review.result,
     dealSignals: reviewDealSignals,
     salesDNA: reviewSalesDNA,
+    psychologyReview: {
+      trueHypothesis: review.psychologyTrue || '',
+      falseHypothesis: review.psychologyFalse || '',
+      lesson: review.psychologyLesson || '',
+    },
+    conversationAnswers: Array.isArray(review.conversationAnswers) ? review.conversationAnswers : [],
     memoryUpdated: hasLongTermMemoryNote,
   }
   const diagnosisTimelineItem = shouldSaveDiagnosis ? {
@@ -1168,15 +1182,13 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
       ...(current.dealSignals || {}),
       ...Object.fromEntries(Object.entries(reviewDealSignals).map(([key, value]) => [key, Boolean(current.dealSignals?.[key] || value)])),
     }
-    const nextTimeline = sortTimelineNewestFirst([...(diagnosisTimelineItem ? [diagnosisTimelineItem] : []), timelineItem, ...(current.timeline || [])])
-    const dealStatus = calculateDealScore({ ...current, dealSignals: mergedDealSignals, timeline: nextTimeline })
+    const nextTimelineBase = sortTimelineNewestFirst([...(diagnosisTimelineItem ? [diagnosisTimelineItem] : []), timelineItem, ...(current.timeline || [])])
     const nextCustomerMemory = mergeCustomerMemoryFromReview(current, review)
     const nextDiagnosis = shouldSaveDiagnosis ? {
       ...(current.diagnosis || {}),
       ...reviewDiagnosis,
     } : current.diagnosis
-
-    return {
+    const baseUpdatedCustomer = {
       ...current,
       stage: review.result === 'Hẹn gặp' ? 'Có hẹn' : current.stage,
       trustScore: shouldSaveDiagnosis && reviewDiagnosis.trustScore !== '' ? reviewDiagnosis.trustScore : current.trustScore,
@@ -1194,9 +1206,52 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
         nextAction,
       },
       customerMemory: nextCustomerMemory,
-      timeline: nextTimeline,
+      timeline: nextTimelineBase,
       diagnosis: nextDiagnosis,
       dealSignals: mergedDealSignals,
+      conversationAnswers: Array.isArray(review.conversationAnswers) && review.conversationAnswers.length
+        ? [...(current.conversationAnswers || []), ...review.conversationAnswers]
+        : current.conversationAnswers,
+    }
+    const nextPsychologyProfile = customerPsychologyEngine({
+      ...baseUpdatedCustomer,
+      psychologyFocusText: [
+        review.customerSaid,
+        review.psychologyTrue,
+        review.psychologyFalse,
+        review.psychologyLesson,
+      ].filter(Boolean).join(' '),
+      psychologyReview: {
+        trueHypothesis: review.psychologyTrue || '',
+        falseHypothesis: review.psychologyFalse || '',
+        lesson: review.psychologyLesson || '',
+      },
+    })
+    const confirmedPsychologyRules = (nextPsychologyProfile.matchedRules || []).slice(0, 5).map((rule) => ({
+      id: rule.id,
+      title: rule.title,
+      matchScore: rule.matchScore,
+    }))
+    captureKnowledgeCandidates({
+      customer: baseUpdatedCustomer,
+      timeline: nextTimelineBase,
+      psychologyReview: timelineItem.psychologyReview,
+      conversationAnswers: timelineItem.conversationAnswers,
+      salesIntelligence: reviewSalesDNA,
+      callReview: review,
+      review,
+      confirmedPsychologyRules,
+    })
+    const nextTimeline = nextTimelineBase.map((item) => item.id === timelineItem.id
+      ? { ...item, confirmedPsychologyRules }
+      : item)
+    const dealStatus = calculateDealScore({ ...baseUpdatedCustomer, dealSignals: mergedDealSignals, timeline: nextTimeline })
+
+    return {
+      ...baseUpdatedCustomer,
+      timeline: nextTimeline,
+      confirmedPsychologyRules,
+      psychologyProfile: nextPsychologyProfile,
       dealScore: dealStatus.score,
       dealScoreReason: dealStatus.reason,
       dealScoreStatus: dealStatus.status,
@@ -1231,6 +1286,8 @@ function App() {
   const [reactivationState, setReactivationState] = useState(loadReactivationState)
   const [backupNotice, setBackupNotice] = useState('')
   const [migrationStatus, setMigrationStatus] = useState('')
+  const [developerMode, setDeveloperMode] = useState(() => localStorage.getItem('huy-advisor-os-developer-mode') === '1')
+  const [knowledgeCandidates, setKnowledgeCandidates] = useState(loadKnowledgeCandidates)
   const sortedChecklist = [...checklist].sort((a, b) => Number(completedTasks[a.id]) - Number(completedTasks[b.id]))
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId)
   const directCallCustomer = customers.find((customer) => customer.id === directCallCustomerId)
@@ -1259,6 +1316,10 @@ function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    if (params.get('developerMode') === '1') {
+      localStorage.setItem('huy-advisor-os-developer-mode', '1')
+      setDeveloperMode(true)
+    }
 
     const runMigration = async () => {
       try {
@@ -1332,6 +1393,12 @@ function App() {
       setSelectedCustomerId(openCustomerId)
       window.history.replaceState({}, '', window.location.pathname)
     }
+  }, [])
+
+  useEffect(() => {
+    const syncCandidates = () => setKnowledgeCandidates(loadKnowledgeCandidates())
+    window.addEventListener('knowledge-candidates-updated', syncCandidates)
+    return () => window.removeEventListener('knowledge-candidates-updated', syncCandidates)
   }, [])
 
   const updateCustomer = (customerId, updater) => {
@@ -1463,6 +1530,10 @@ function App() {
     }
   }
 
+  const updateCandidateStatus = (candidateId, status) => {
+    setKnowledgeCandidates(updateKnowledgeCandidateStatus(candidateId, status))
+  }
+
   if (directCallCustomer) {
     return (
       <CallMode
@@ -1565,6 +1636,12 @@ function App() {
         onExport={handleExportBackup}
         onImport={handleImportBackup}
       />
+      {developerMode && (
+        <KnowledgeCandidateCenter
+          candidates={knowledgeCandidates}
+          onStatusChange={updateCandidateStatus}
+        />
+      )}
 
       <section className="workspace-grid">
         <article className="card kpi-card">
@@ -1869,6 +1946,53 @@ function KnowledgeList({ title, items }) {
       <ul>
         {items.map((item) => <li key={item}>{item}</li>)}
       </ul>
+    </section>
+  )
+}
+
+function KnowledgeCandidateCenter({ candidates = [], onStatusChange }) {
+  const visibleCandidates = [...candidates].sort((a, b) => String(b.lastSeen || '').localeCompare(String(a.lastSeen || '')))
+
+  return (
+    <section className="knowledge-candidate-center">
+      <div className="card-head">
+        <div>
+          <p>DEVELOPER MODE · SETTINGS</p>
+          <h2>🧪 Knowledge Candidate Center</h2>
+        </div>
+        <span>{visibleCandidates.length} candidates</span>
+      </div>
+      {visibleCandidates.length === 0 ? (
+        <div className="candidate-empty">Chưa có Knowledge Candidate. Sau Call Review có pattern, CRM sẽ đề xuất Candidate ở đây.</div>
+      ) : (
+        <div className="candidate-list">
+          {visibleCandidates.map((candidate) => (
+            <article className="candidate-item" key={candidate.candidateId}>
+              <div className="candidate-main">
+                <small>Candidate</small>
+                <strong>{candidate.title}</strong>
+                <p>{candidate.observation}</p>
+              </div>
+              <div className="candidate-evidence">
+                <small>Evidence</small>
+                <ul>
+                  {(candidate.evidence || []).slice(0, 4).map((item, index) => <li key={`${candidate.candidateId}-${index}`}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="candidate-meta-grid">
+                <InfoRow label="Repeat Count" value={candidate.repeatCount} />
+                <InfoRow label="Customers" value={(candidate.customerIds || []).join(' · ') || '—'} />
+                <InfoRow label="Workspace" value={candidate.workspace || '—'} />
+                <InfoRow label="Status" value={candidate.status} highlight />
+              </div>
+              <div className="candidate-actions">
+                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'CONFIRMED')}>Approve</button>
+                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'REJECTED')}>Reject</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -2537,6 +2661,229 @@ function formatCustomer360Value(value, fallback = 'Chưa ghi nhận.') {
   return hasMeaningfulValue(value) ? value : fallback
 }
 
+function cleanCoachText(value, fallback = 'Chưa đủ dữ liệu để kết luận.') {
+  const text = String(value || '').trim()
+  if (!text) return fallback
+  return text
+    .replace(/PF-\d{4}\s*·\s*/gi, '')
+    .replace(/PF-\d{4}/gi, '')
+    .replace(/trigger:\s*/gi, 'tín hiệu: ')
+    .replace(/Diagnosis barrier:\s*/gi, 'Rào cản đang ghi nhận: ')
+    .replace(/Customer stage:\s*/gi, 'Giai đoạn khách: ')
+    .replace(/Journey:\s*/gi, 'Hành trình hiện tại: ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+function lowerFirstLetter(value) {
+  const text = cleanCoachText(value, '')
+  if (!text) return ''
+  return text.charAt(0).toLowerCase() + text.slice(1)
+}
+
+function buildAthenaAssessment(psychologyProfile = {}) {
+  const motivation = lowerFirstLetter(psychologyProfile.motivation)
+  const fear = lowerFirstLetter(psychologyProfile.fear)
+  const barrier = lowerFirstLetter(psychologyProfile.decisionBarrier)
+
+  if (motivation && !motivation.includes('chưa đủ dữ liệu')) {
+    return `Em nghĩ khách ${motivation}${fear && !fear.includes('chưa rõ') ? ` Điểm cần để ý là khách ${fear}` : ''}`
+  }
+
+  if (barrier && !barrier.includes('chưa rõ')) {
+    return `Em nghĩ rào cản chính của khách lúc này là ${barrier}. Mình nên xác nhận lại trước khi tư vấn sâu.`
+  }
+
+  return 'Em chưa có đủ dữ liệu chắc chắn về tâm lý khách. Mình nên hỏi ngắn để xác nhận điều khách đang quan tâm nhất.'
+}
+
+function buildAthenaExplanation(customer, timelineEvents = [], customerMemory = {}, diagnosis = {}, psychologyProfile = {}) {
+  const items = [
+    diagnosis.barrier && `Hồ sơ đang ghi nhận rào cản: ${diagnosis.barrier}.`,
+    diagnosis.customerStage && `Khách đang ở giai đoạn: ${diagnosis.customerStage}.`,
+    diagnosis.decisionMaker && `Người quyết định đang ghi nhận: ${diagnosis.decisionMaker}.`,
+    customerMemory.confirmed?.concerns && `Khách từng nhắc điều lo: ${customerMemory.confirmed.concerns}.`,
+    customerMemory.confirmed?.biggestBarrier && `Barrier lớn nhất đã ghi nhận: ${customerMemory.confirmed.biggestBarrier}.`,
+    customerMemory.confirmed?.purchaseGoal && `Mục tiêu mua đã ghi nhận: ${customerMemory.confirmed.purchaseGoal}.`,
+    customer.stage && `Hành trình hiện tại: ${customer.stage}.`,
+    timelineEvents.length > 0 && `Timeline có ${timelineEvents.length} tương tác để tham chiếu.`,
+    ...(psychologyProfile.behaviorSignals || []).slice(0, 2),
+  ].filter(Boolean).map((item) => cleanCoachText(item))
+
+  const uniqueItems = Array.from(new Set(items)).filter(Boolean)
+  return uniqueItems.length ? uniqueItems.slice(0, 3) : ['Dữ liệu còn mỏng, nên dùng cuộc gọi tới để hỏi rõ nhu cầu, rào cản và bước tiếp theo.']
+}
+
+function buildAthenaUncertainty(psychologyProfile = {}) {
+  const unknowns = (psychologyProfile.unknowns || []).map((item) => cleanCoachText(item)).filter(Boolean)
+  if (!unknowns.length || unknowns.some((item) => item.toLowerCase().includes('không có thiếu hụt lớn'))) {
+    return ['Em vẫn nên kiểm tra lại rào cản thật trước khi đề xuất bước tiếp theo.']
+  }
+  return unknowns.slice(0, 3).map((item) => `Em chưa chắc về: ${item}.`)
+}
+
+function buildAthenaConversationState(answers = {}, questions = [], baseCoach = '') {
+  const values = Object.values(answers).filter(Boolean)
+  const yesCount = values.filter((value) => value === 'Có').length
+  const noCount = values.filter((value) => value === 'Không').length
+  const unknownCount = values.filter((value) => value === 'Chưa biết').length
+  const answeredCount = values.length
+  const total = questions.length
+
+  if (!answeredCount) {
+    return {
+      confidenceLabel: 'Cần kiểm chứng',
+      validationStatus: total ? `Chưa kiểm chứng ${total} câu hỏi.` : 'Chưa có câu hỏi kiểm chứng.',
+      coach: baseCoach,
+      recommendation: 'Chọn Có / Không / Chưa biết để Athena chỉnh hướng trao đổi.',
+    }
+  }
+
+  if (unknownCount > 0) {
+    return {
+      confidenceLabel: 'Chưa đủ chắc',
+      validationStatus: `Đã kiểm chứng ${answeredCount}/${total}. Còn điểm chưa biết.`,
+      coach: 'Lần tới mình thử kiểm tra điểm “Chưa biết” trước, rồi mới đi sâu vào tư vấn.',
+      recommendation: 'Ưu tiên hỏi một câu ngắn để lấp khoảng trống trước khi đề xuất.',
+    }
+  }
+
+  if (yesCount >= noCount) {
+    return {
+      confidenceLabel: 'Đã có tín hiệu xác nhận',
+      validationStatus: `Đã kiểm chứng ${answeredCount}/${total}. Giả thuyết đang có cơ sở hơn.`,
+      coach: 'Có tín hiệu khớp. Mình nên đi tiếp bằng câu hỏi xác nhận nhẹ, không vội chốt.',
+      recommendation: 'Giữ nhịp đối thoại, hỏi điều kiện để khách yên tâm đi bước tiếp theo.',
+    }
+  }
+
+  return {
+    confidenceLabel: 'Cần đổi hướng',
+    validationStatus: `Đã kiểm chứng ${answeredCount}/${total}. Một số giả thuyết chưa khớp.`,
+    coach: 'Có vẻ hướng nhận định ban đầu chưa đủ đúng. Mình nên hỏi lại nhu cầu thật và rào cản thật.',
+    recommendation: 'Không bám vào giả thuyết cũ; quay về hỏi khách đang cần làm rõ điều gì nhất.',
+  }
+}
+
+function formatConversationAnswers(answers = {}, questions = []) {
+  return questions
+    .map((question, index) => ({
+      question,
+      answer: answers[index] || '',
+    }))
+    .filter((item) => item.answer)
+}
+
+const workspaceCoachConfig = {
+  phone: {
+    label: '☎️ Điện thoại',
+    focus: ['Cách mở đầu', 'Câu hỏi đầu tiên', 'Điều nên tránh', 'Mục tiêu cuộc gọi'],
+    coach: 'Mở đầu ngắn, xin phép nói 1–2 phút, rồi hỏi đúng một câu để xác nhận nhu cầu hoặc rào cản chính.',
+    doNotDo: 'Đừng tư vấn dài khi khách chưa cho phép nói chuyện.',
+  },
+  zalo: {
+    label: '💬 Zalo',
+    focus: ['Có nên nhắn không', 'Gửi gì', 'Gửi lúc nào', 'Không nên gửi gì'],
+    coach: 'Nhắn ngắn, có một mục tiêu rõ. Gửi đúng thứ khách cần xem, rồi xin quyền follow-up bằng một câu hỏi dễ trả lời.',
+    doNotDo: 'Đừng gửi quá nhiều tài liệu hoặc nhắn dồn khi khách chưa phản hồi.',
+  },
+  meeting: {
+    label: '🤝 Gặp trực tiếp',
+    focus: ['Tạo niềm tin', 'Quan sát phản ứng', 'Hỏi sâu hơn', 'Chốt bước tiếp theo'],
+    coach: 'Đi chậm hơn điện thoại. Quan sát cách khách phản ứng, hỏi điều khách đang cân nhắc, rồi chốt một bước tiếp theo cụ thể.',
+    doNotDo: 'Đừng biến buổi gặp thành bài thuyết trình một chiều.',
+  },
+  model: {
+    label: '🏙️ Sa bàn',
+    focus: ['Nên bắt đầu ở đâu', 'Điều nên quan sát', 'Khi nào hỏi', 'Khi nào chuyển khu', 'Khi nào nói giá'],
+    coach: 'Bắt đầu bằng tổng thể, quan sát điểm khách dừng mắt, hỏi vì sao khách quan tâm điểm đó, rồi mới đi vào sản phẩm/giá.',
+    doNotDo: 'Đừng nói giá quá sớm khi khách chưa hiểu vị trí và logic sản phẩm.',
+  },
+  project: {
+    label: '🌴 Dự án',
+    focus: ['Điểm dừng', 'Điều nên kể', 'Điều nên hỏi', 'Điều nên tránh'],
+    coach: 'Dẫn khách qua vài điểm dừng có mục tiêu. Mỗi điểm chỉ kể một ý, rồi hỏi khách cảm nhận gì trước khi đi tiếp.',
+    doNotDo: 'Đừng nói liên tục trong suốt tuyến tham quan.',
+  },
+  house: {
+    label: '🏠 Nhà mẫu',
+    focus: ['Điểm cảm xúc', 'Điều khách đang quan sát', 'Câu hỏi nên hỏi', 'Điều không nên nói'],
+    coach: 'Để khách cảm nhận trước. Quan sát khách chú ý không gian nào, rồi hỏi về cách gia đình họ sẽ dùng không gian đó.',
+    doNotDo: 'Đừng nói quá nhiều thông số kỹ thuật khi khách đang quan sát cảm xúc sống.',
+  },
+}
+
+function buildWorkspaceCoach(workspaceKey, conversationState = {}) {
+  const config = workspaceCoachConfig[workspaceKey] || workspaceCoachConfig.phone
+  return {
+    ...config,
+    coach: `${config.coach} ${conversationState.coach || ''}`.trim(),
+    recommendation: conversationState.recommendation || 'Giữ cuộc trao đổi ngắn và có next step rõ.',
+  }
+}
+
+function buildInsightText({
+  observation = '',
+  meaning = '',
+  evidence = [],
+  uncertainty = '',
+  validation = '',
+  ifMe = '',
+}) {
+  const safeEvidence = Array.isArray(evidence) ? evidence.map((item) => cleanCoachText(item, '')).filter(Boolean).slice(0, 3) : []
+  return [
+    `1. Em đang quan sát thấy ${cleanCoachText(observation, 'dữ liệu khách còn mỏng, chưa có tín hiệu thật rõ.')}`,
+    `2. Em nghĩ điều này có thể có nghĩa là ${cleanCoachText(meaning, 'mình chưa nên kết luận vội, cần hỏi thêm để hiểu đúng.')}`,
+    `3. Em dựa trên những dấu hiệu ${safeEvidence.length ? safeEvidence.join(' · ') : 'hồ sơ hiện tại chưa có nhiều bằng chứng chắc.'}`,
+    `4. Điều em chưa chắc ${cleanCoachText(uncertainty, 'là rào cản thật sự của khách đang nằm ở đâu.')}`,
+    `5. Điều em muốn anh kiểm tra ${cleanCoachText(validation, 'là khách đang cần làm rõ điều gì nhất trước khi đi bước tiếp theo.')}`,
+    `6. Nếu là em ${cleanCoachText(ifMe, 'em sẽ hỏi một câu ngắn, nghe phản ứng, rồi mới đề xuất bước tiếp theo.')}`,
+  ].join('\n')
+}
+
+function buildPsychologyInsight({ customer, timelineEvents, customerMemory, diagnosis, psychologyProfile, questions }) {
+  const behavior = Array.isArray(psychologyProfile.behaviorSignals) ? psychologyProfile.behaviorSignals[0] : ''
+  const observation = firstMeaningful(
+    behavior,
+    diagnosis.barrier && `khách đang có rào cản ${diagnosis.barrier}.`,
+    customerMemory.confirmed?.concerns && `khách từng nhắc điều lo: ${customerMemory.confirmed.concerns}.`,
+    timelineEvents.length && `khách đã có ${timelineEvents.length} tương tác trong timeline.`,
+  )
+  const meaning = firstMeaningful(
+    psychologyProfile.motivation,
+    psychologyProfile.fear,
+    psychologyProfile.decisionBarrier,
+  )
+  const evidence = buildAthenaExplanation(customer, timelineEvents, customerMemory, diagnosis, psychologyProfile)
+  const uncertainty = buildAthenaUncertainty(psychologyProfile)[0]
+  const validation = questions[0]
+  const ifMe = psychologyProfile.recommendedApproach || psychologyProfile.athenaCoach
+
+  return buildInsightText({ observation, meaning, evidence, uncertainty, validation, ifMe })
+}
+
+function buildTodayActionInsight(todayAction = {}, psychologyProfile = {}) {
+  return buildInsightText({
+    observation: todayAction.reason || 'hồ sơ đang cần một next action rõ.',
+    meaning: todayAction.goal || 'cuộc liên hệ cần có mục tiêu cụ thể.',
+    evidence: [todayAction.action, psychologyProfile.decisionBarrier, psychologyProfile.fear].filter(Boolean),
+    uncertainty: 'khách có thể phản hồi khác dự kiến, nên đừng đi theo kịch bản cứng.',
+    validation: Array.isArray(todayAction.responseSteps) ? todayAction.responseSteps[0] : '',
+    ifMe: `em sẽ bắt đầu bằng việc: ${todayAction.action || 'xác nhận nhu cầu thật'}.`,
+  })
+}
+
+function buildWorkspaceInsight(workspaceCoach = {}, psychologyProfile = {}) {
+  return buildInsightText({
+    observation: `anh đang làm việc trong ngữ cảnh ${workspaceCoach.label || 'hiện tại'}.`,
+    meaning: `cách coach cần ưu tiên ${Array.isArray(workspaceCoach.focus) ? workspaceCoach.focus.join(', ') : 'bối cảnh thực tế'} thay vì nói chung chung.`,
+    evidence: [workspaceCoach.recommendation, psychologyProfile.decisionBarrier, psychologyProfile.trustGap].filter(Boolean),
+    uncertainty: 'phản ứng thật của khách trong workspace này có thể khác hồ sơ đang ghi nhận.',
+    validation: workspaceCoach.focus?.[0] ? `điểm đầu tiên cần kiểm tra là: ${workspaceCoach.focus[0]}.` : 'kiểm tra khách đang cần gì ngay lúc này.',
+    ifMe: workspaceCoach.coach,
+  })
+}
+
 function isFollowUpDue(dateValue) {
   if (!hasMeaningfulValue(dateValue)) return false
   const followUp = new Date(dateValue)
@@ -2547,7 +2894,7 @@ function isFollowUpDue(dateValue) {
   return followUp.getTime() <= today.getTime()
 }
 
-function buildNextBestAction(customer, timelineEvents = [], customerMemory = {}) {
+function buildNextBestAction(customer, timelineEvents = [], customerMemory = {}, psychologyProfile = {}) {
   const timelineText = timelineEvents.map((item) => [
     item.displayType,
     item.title,
@@ -2563,13 +2910,14 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
   const sentMaterial = timelineText.includes('tài liệu') || timelineText.includes('zalo') || timelineText.includes('bảng giá') || timelineText.includes('video')
   const hasAppointment = stageText.includes('hẹn') || timelineText.includes('hẹn') || timelineText.includes('meeting') || timelineText.includes('tham quan')
   const silent = stageText.includes('im lặng') || timelineText.includes('im lặng') || timelineText.includes('không phản hồi') || timelineText.includes('seen')
-  const rememberedConcern = firstMeaningful(customerMemory.confirmed?.concerns, customerMemory.confirmed?.biggestBarrier, customer.mainConcern)
+  const rememberedConcern = firstMeaningful(customerMemory.confirmed?.concerns, customerMemory.confirmed?.biggestBarrier, customer.mainConcern, psychologyProfile.decisionBarrier, psychologyProfile.fear)
+  const psychologyReason = psychologyProfile?.athenaCoach ? ` Athena gợi ý: ${cleanCoachText(psychologyProfile.athenaCoach)}` : ''
 
   if (sentMaterial && due) {
     return {
       priority: 'Cao',
       action: 'Gọi xác nhận khách đã xem tài liệu.',
-      reason: 'Khách đã được gửi tài liệu và follow-up đã đến hạn.',
+      reason: `Khách đã được gửi tài liệu và follow-up đã đến hạn.${psychologyReason}`,
       goal: 'Lấy phản hồi thật, làm rõ điểm khách còn lăn tăn và chốt bước tiếp theo.',
       responseSteps: [
         'Nếu khách đã xem: hỏi phần nào khách quan tâm nhất.',
@@ -2583,7 +2931,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
     return {
       priority: 'Cao',
       action: 'Gọi follow-up ngay hôm nay.',
-      reason: 'Follow-up đã đến hạn hoặc quá hạn.',
+      reason: `Follow-up đã đến hạn hoặc quá hạn.${psychologyReason}`,
       goal: 'Khơi lại cuộc trao đổi và xác nhận khách còn quan tâm không.',
       responseSteps: [
         'Nếu khách nghe máy: nhắc lại ngắn gọn lần trao đổi trước.',
@@ -2597,7 +2945,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
     return {
       priority: 'Cao',
       action: 'Xác nhận lịch hẹn với khách.',
-      reason: 'Khách đang ở giai đoạn có hẹn, cần giảm rủi ro hủy lịch.',
+      reason: `Khách đang ở giai đoạn có hẹn, cần giảm rủi ro hủy lịch.${psychologyReason}`,
       goal: 'Giữ lịch chắc, xác nhận người đi cùng và chuẩn bị đúng tài liệu.',
       responseSteps: [
         'Nếu khách xác nhận: nhắc thời gian, địa điểm và người đi cùng.',
@@ -2611,7 +2959,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
     return {
       priority: 'Cao',
       action: 'Gọi lần đầu để xác nhận nhu cầu.',
-      reason: 'Khách chưa có lịch sử tương tác rõ ràng.',
+      reason: `Khách chưa có lịch sử tương tác rõ ràng.${psychologyReason}`,
       goal: 'Hiểu khách quan tâm điều gì, xin kết nối Zalo và đặt follow-up.',
       responseSteps: [
         'Nếu khách có thời gian: hỏi nhu cầu chính trước.',
@@ -2625,7 +2973,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
     return {
       priority: 'Trung bình',
       action: 'Nhắn Zalo ngắn để mở lại phản hồi.',
-      reason: 'Khách đã xem hoặc im lặng sau tương tác trước.',
+      reason: `Khách đã xem hoặc im lặng sau tương tác trước.${psychologyReason}`,
       goal: 'Kéo khách trả lời bằng một câu hỏi dễ phản hồi.',
       responseSteps: [
         'Nếu khách trả lời: chuyển sang hỏi nhu cầu hoặc rào cản.',
@@ -2639,7 +2987,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
     return {
       priority: 'Trung bình',
       action: nextAction || 'Gọi để xử lý rào cản chính.',
-      reason: `Hồ sơ đang ghi nhận rào cản: ${rememberedConcern}.`,
+      reason: `Hồ sơ đang ghi nhận rào cản: ${rememberedConcern}.${psychologyReason}`,
       goal: 'Xác nhận rào cản còn đúng không và thống nhất bước xử lý.',
       responseSteps: [
         'Nếu rào cản còn đúng: hỏi điều kiện nào giúp khách yên tâm hơn.',
@@ -2652,7 +3000,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {})
   return {
     priority: 'Thấp',
     action: nextAction || 'Gọi kiểm tra mức độ quan tâm.',
-    reason: 'Chưa có tín hiệu khẩn cấp trong hồ sơ hiện tại.',
+    reason: `Chưa có tín hiệu khẩn cấp trong hồ sơ hiện tại.${psychologyReason}`,
     goal: 'Cập nhật tình trạng khách và xác định next action rõ ràng.',
     responseSteps: [
       'Nếu khách còn quan tâm: hỏi bước tiếp theo khách muốn làm.',
@@ -2668,17 +3016,37 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [isEditingSnapshot, setIsEditingSnapshot] = useState(false)
   const [isEditingMemory, setIsEditingMemory] = useState(false)
   const [selectedTimelineEvent, setSelectedTimelineEvent] = useState(null)
+  const [athenaConversationAnswers, setAthenaConversationAnswers] = useState({})
+  const [selectedWorkspace, setSelectedWorkspace] = useState('phone')
   const dealEngine = calculateDealScore(customer)
   const customerMemory = buildCustomerMemory(customer)
   const timelineEvents = sortTimelineNewestFirst(customer.timeline || [])
   const latestInteraction = timelineEvents[0]
   const journeyIndex = getCustomer360JourneyIndex(customer, timelineEvents)
   const diagnosis = customer.diagnosis || {}
-  const knowledgeRecommendation = recommendKnowledgeForCustomer(customer)
+  const psychologyProfile = Array.isArray(customer.psychologyProfile?.matchedRules) ? customer.psychologyProfile : customerPsychologyEngine({
+    ...customer,
+    customerMemory,
+    diagnosis,
+    timeline: timelineEvents,
+  })
+  const knowledgeRecommendation = recommendKnowledgeForCustomer(customer, psychologyProfile)
   const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
   const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
   const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
-  const todayAction = buildNextBestAction(customer, timelineEvents, customerMemory)
+  const todayAction = buildNextBestAction(customer, timelineEvents, customerMemory, psychologyProfile)
+  const athenaAssessment = buildAthenaAssessment(psychologyProfile)
+  const athenaExplanation = buildAthenaExplanation(customer, timelineEvents, customerMemory, diagnosis, psychologyProfile)
+  const athenaUncertainty = buildAthenaUncertainty(psychologyProfile)
+  const athenaCoach = cleanCoachText(psychologyProfile.recommendedApproach || psychologyProfile.athenaCoach, 'Hỏi ngắn để xác nhận nhu cầu thật, rồi mới đề xuất bước tiếp theo.')
+  const athenaQuestions = (psychologyProfile.validationQuestions || []).map((item) => cleanCoachText(item)).filter(Boolean).slice(0, 3)
+  const athenaDoNotDo = (psychologyProfile.doNotDo || []).map((item) => cleanCoachText(item)).filter(Boolean).slice(0, 3)
+  const athenaConversationState = buildAthenaConversationState(athenaConversationAnswers, athenaQuestions, athenaCoach)
+  const workspaceCoach = buildWorkspaceCoach(selectedWorkspace, athenaConversationState)
+  const conversationAnswersForReview = formatConversationAnswers(athenaConversationAnswers, athenaQuestions)
+  const psychologyInsight = buildPsychologyInsight({ customer, timelineEvents, customerMemory, diagnosis, psychologyProfile, questions: athenaQuestions })
+  const todayActionInsight = buildTodayActionInsight(todayAction, psychologyProfile)
+  const workspaceInsight = buildWorkspaceInsight(workspaceCoach, psychologyProfile)
   const thingsToAvoid = [
     firstMeaningful(customer.coach?.mistake, customerMemory.cautions[0], customerMemory.confirmed.biggestBarrier, 'Đừng nói quá nhiều trước khi hiểu khách.'),
     firstMeaningful(customerMemory.cautions[1], customerMemory.confirmed.concerns, customer.workingHypotheses, 'Không ép khách quyết định khi chưa đủ niềm tin.'),
@@ -2768,6 +3136,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
         customer={customer}
         onBack={() => setIsCallMode(false)}
         onSaveReview={handleCallReviewSave}
+        conversationAnswers={conversationAnswersForReview}
       />
     )
   }
@@ -2803,6 +3172,115 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
             <InfoRow label="Barrier" value={diagnosis.barrier || 'Chưa đánh giá'} />
             <InfoRow label="Decision Maker" value={diagnosis.decisionMaker || customer.snapshot?.decisionMaker || 'Chưa rõ'} />
             <InfoRow label="Interest" value={formatCustomer360Value(diagnosis.interest, 'Chưa đánh giá')} highlight />
+          </div>
+        </article>
+
+        <section className="workspace-selector-card">
+          <div>
+            <small>WORKSPACE COACH</small>
+            <h2>Hôm nay anh đang ở đâu?</h2>
+          </div>
+          <div className="workspace-selector-options">
+            {Object.entries(workspaceCoachConfig).map(([key, workspace]) => (
+              <button
+                type="button"
+                className={selectedWorkspace === key ? 'is-selected' : ''}
+                key={key}
+                onClick={() => setSelectedWorkspace(key)}
+              >
+                ○ {workspace.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <article className="card customer-psychology-card">
+          <div className="card-head">
+            <h2>🧠 Tâm lý khách hàng</h2>
+            <p>{workspaceCoach.label}</p>
+          </div>
+          <div className="psychology-grid">
+            <section className="psychology-main">
+              <small>ATHENA NHẬN ĐỊNH</small>
+              <p>{psychologyInsight}</p>
+            </section>
+            <section>
+              <small>ATHENA GIẢI THÍCH</small>
+              <ul>
+                {[
+                  `1. Em đang quan sát thấy ${cleanCoachText(athenaExplanation[0], 'dữ liệu khách còn mỏng.')}`,
+                  `2. Em nghĩ điều này có thể có nghĩa là ${cleanCoachText(psychologyProfile.motivation, 'khách chưa bộc lộ động cơ chính rõ ràng.')}`,
+                  `3. Em dựa trên những dấu hiệu ${athenaExplanation.map((item) => cleanCoachText(item)).join(' · ')}`,
+                ].map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+              </ul>
+            </section>
+            <section>
+              <small>ATHENA CHƯA CHẮC</small>
+              <ul>
+                {[
+                  `4. Điều em chưa chắc ${cleanCoachText(athenaUncertainty[0], 'là rào cản thật đang nằm ở đâu.')}`,
+                  `5. Điều em muốn anh kiểm tra ${cleanCoachText(athenaQuestions[0], 'là khách đang cần làm rõ điều gì nhất.')}`,
+                  `6. Nếu là em ${cleanCoachText(athenaCoach, 'em sẽ hỏi một câu ngắn rồi nghe phản ứng trước.')}`,
+                ].map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+              </ul>
+            </section>
+            <section className="athena-conversation-coach">
+              <small>🤔 ATHENA MUỐN HỎI</small>
+              <div className="athena-question-list">
+                {athenaQuestions.map((question, index) => (
+                  <div className="athena-question-item" key={`${question}-${index}`}>
+                    <p>{question}</p>
+                    <div className="athena-answer-buttons">
+                      {['Có', 'Không', 'Chưa biết'].map((answer) => (
+                        <button
+                          type="button"
+                          className={athenaConversationAnswers[index] === answer ? 'is-selected' : ''}
+                          key={answer}
+                          onClick={() => setAthenaConversationAnswers((current) => ({
+                            ...current,
+                            [index]: answer,
+                          }))}
+                        >
+                          ○ {answer}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="athena-conversation-status">
+                <strong>{athenaConversationState.confidenceLabel}</strong>
+                <span>{athenaConversationState.validationStatus}</span>
+                <p>{athenaConversationState.recommendation}</p>
+              </div>
+            </section>
+            <section>
+              <small>ATHENA COACH</small>
+              <p>{workspaceInsight}</p>
+              <div className="workspace-focus-list">
+                {workspaceCoach.focus.map((item) => <span key={item}>{item}</span>)}
+              </div>
+              <em>{buildInsightText({
+                observation: workspaceCoach.recommendation,
+                meaning: 'coach cần đi theo đúng bối cảnh đang làm việc.',
+                evidence: workspaceCoach.focus,
+                uncertainty: 'khách có thể phản ứng khác hồ sơ cũ.',
+                validation: workspaceCoach.focus[0],
+                ifMe: workspaceCoach.coach,
+              })}</em>
+            </section>
+            <section>
+              <small>ĐIỀU KHÔNG NÊN LÀM</small>
+              <ul>
+                {[workspaceCoach.doNotDo, ...athenaDoNotDo].slice(0, 3).map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+              </ul>
+            </section>
+            <section>
+              <small>CÂU HỎI KIỂM CHỨNG</small>
+              <ul>
+                {athenaQuestions.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+              </ul>
+            </section>
           </div>
         </article>
 
@@ -2848,12 +3326,19 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
                 <p>{todayAction.action}</p>
               </section>
               <section>
-                <small>Lý do</small>
-                <p>{todayAction.reason}</p>
+              <small>Lý do</small>
+                <p>{todayActionInsight}</p>
               </section>
               <section>
                 <small>Mục tiêu cuộc liên hệ</small>
-                <p>{todayAction.goal}</p>
+                <p>{buildInsightText({
+                  observation: todayAction.action,
+                  meaning: todayAction.goal,
+                  evidence: [todayAction.reason, psychologyProfile.decisionBarrier, psychologyProfile.trustGap].filter(Boolean),
+                  uncertainty: 'khách có thể chưa nói hết rào cản thật.',
+                  validation: todayAction.responseSteps[0],
+                  ifMe: `em sẽ tập trung vào mục tiêu: ${todayAction.goal}`,
+                })}</p>
               </section>
             </div>
             <div className="response-rule-box">
@@ -2969,7 +3454,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   )
 }
 
-function CallMode({ customer, onBack, onSaveReview, progress }) {
+function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswers = [] }) {
   const [askedQuestions, setAskedQuestions] = useState({})
   const [callState, setCallState] = useState('ready')
 
@@ -2998,7 +3483,7 @@ function CallMode({ customer, onBack, onSaveReview, progress }) {
       </header>
 
       {isReview ? (
-        <CallReview customer={customer} askedCount={askedCount} onSave={onSaveReview} />
+        <CallReview customer={customer} askedCount={askedCount} onSave={onSaveReview} conversationAnswers={conversationAnswers} />
       ) : (
         <section className="call-grid">
           <article className="card coach-card call-coach-card">
@@ -3080,7 +3565,7 @@ function CallMode({ customer, onBack, onSaveReview, progress }) {
   )
 }
 
-function CallReview({ customer, askedCount, onSave }) {
+function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) {
   const [form, setForm] = useState({
     customerSaid: 'Anh muốn hiểu rõ rủi ro và phương án phù hợp trước.',
     need: 'Đầu tư trung hạn, ưu tiên an toàn.',
@@ -3107,6 +3592,10 @@ function CallReview({ customer, askedCount, onSave }) {
     diagnosisDecisionMaker: customer.diagnosis?.decisionMaker || 'Chính khách',
     diagnosisInterest: Array.isArray(customer.diagnosis?.interest) ? customer.diagnosis.interest : ['Đầu tư'],
     longTermMemoryNote: '',
+    psychologyTrue: '',
+    psychologyFalse: '',
+    psychologyLesson: '',
+    conversationAnswers,
   })
 
   const updateField = (field, value) => {
@@ -3341,6 +3830,41 @@ function CallReview({ customer, askedCount, onSave }) {
                 ))}
               </div>
             </section>
+          </div>
+        </section>
+        <section className="psychology-review-block">
+          <div className="card-head">
+            <h3>🧠 Tâm lý khách hàng</h3>
+            <p>Ghi lại giả thuyết đúng/sai để Athena lần sau tư vấn sát hơn.</p>
+          </div>
+          <div className="psychology-review-grid">
+            <label>
+              <span>Giả thuyết tâm lý nào đúng?</span>
+              <textarea
+                className="compact-textarea"
+                value={form.psychologyTrue}
+                onChange={(event) => updateField('psychologyTrue', event.target.value)}
+                placeholder="Ví dụ: Khách thật sự lo thanh khoản."
+              />
+            </label>
+            <label>
+              <span>Giả thuyết nào sai?</span>
+              <textarea
+                className="compact-textarea"
+                value={form.psychologyFalse}
+                onChange={(event) => updateField('psychologyFalse', event.target.value)}
+                placeholder="Ví dụ: Không phải vì giá, mà vì chưa hỏi vợ."
+              />
+            </label>
+            <label>
+              <span>Có bài học mới không?</span>
+              <textarea
+                className="compact-textarea"
+                value={form.psychologyLesson}
+                onChange={(event) => updateField('psychologyLesson', event.target.value)}
+                placeholder="Ví dụ: Với khách này nên hỏi người quyết định trước."
+              />
+            </label>
           </div>
         </section>
         <section className="long-term-memory-note">

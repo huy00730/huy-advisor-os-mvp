@@ -143,14 +143,23 @@ function scoreReminder(item, context) {
   return { ...item, matchScore: score, why: reasons.join(' · ') }
 }
 
-export function recommendKnowledgeForCustomer(customer = {}) {
+export function recommendKnowledgeForCustomer(customer = {}, psychologyProfile = {}) {
   const diagnosis = customer.diagnosis || {}
+  const psychologyText = [
+    psychologyProfile.fear,
+    psychologyProfile.decisionBarrier,
+    psychologyProfile.motivation,
+    psychologyProfile.decisionStyle,
+    ...(Array.isArray(psychologyProfile.matchedRules)
+      ? psychologyProfile.matchedRules.flatMap((rule) => [rule.id, rule.title, ...(rule.tags || [])])
+      : []),
+  ].join(' ')
   const context = {
-    barrier: diagnosis.barrier || '',
+    barrier: diagnosis.barrier || psychologyProfile.decisionBarrier || psychologyProfile.fear || '',
     customerStage: diagnosis.customerStage || customer.stage || '',
     decisionMaker: diagnosis.decisionMaker || customer.snapshot?.decisionMaker || '',
     trustScore: Number(diagnosis.trustScore ?? customer.trustScore ?? 0),
-    interestText: Array.isArray(diagnosis.interest) ? diagnosis.interest.join(' ') : '',
+    interestText: [Array.isArray(diagnosis.interest) ? diagnosis.interest.join(' ') : '', psychologyText].join(' '),
   }
 
   const knowledge = knowledgeRegistry
