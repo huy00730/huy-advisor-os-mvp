@@ -2769,7 +2769,7 @@ function CallReview({ customer, askedCount, onSave }) {
     <section className="call-review-wrap">
       <article className="card call-review-card">
         <div className="card-head">
-          <h2>☎️ Call Review</h2>
+          <h2>☎️ First Contact Master</h2>
           <p>Dưới 60 giây</p>
         </div>
         <div className="review-grid">
@@ -2909,20 +2909,22 @@ function CallReview({ customer, askedCount, onSave }) {
           </section>
         </div>
         <div className="review-summary">
-          <strong>Đã hỏi {askedCount}/5 câu Discovery.</strong>
+          <strong>Checklist: Đã hỏi {askedCount}/5 câu Discovery.</strong>
           <span>Knowledge: {form.knowledge} · Decision: {form.decision}</span>
         </div>
         <section className="long-term-memory-note">
           <h3>💡 Điều cần nhớ</h3>
+          <p>{`Ví dụ:
+* Là chủ quán cà phê.
+* Rất thân thiện.
+* Vợ quyết định.
+* Chỉ nghe máy sau 19h.`}</p>
           <label>
             <span>Có điều gì về khách mà anh muốn CRM nhớ lâu dài không?</span>
             <textarea
               value={form.longTermMemoryNote}
               onChange={(event) => updateField('longTermMemoryNote', event.target.value)}
-              placeholder={`* Là chủ quán cà phê.
-* Rất thân thiện.
-* Vợ quyết định.
-* Chỉ nghe máy sau 19h.`}
+              placeholder="Nhập ghi nhớ dài hạn về khách ở đây..."
             />
           </label>
         </section>
@@ -2930,7 +2932,7 @@ function CallReview({ customer, askedCount, onSave }) {
           className="call-primary-button"
           onClick={() => onSave({ ...form, confirmedSummary })}
         >
-          ✅ HOÀN THÀNH
+          ✅ Lưu kết quả cuộc gọi
         </button>
       </article>
     </section>
