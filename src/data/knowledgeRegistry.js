@@ -1,141 +1,57 @@
-export const knowledgeRegistry = [
-  {
-    id: 'P-0003',
-    title: 'Khách đầu tư cần thấy logic rủi ro trước sản phẩm',
-    summary: 'Trước khi nói sản phẩm, hãy hỏi mục tiêu nắm giữ, khẩu vị rủi ro và tiêu chí thoát hàng. Khách đầu tư cần khung ra quyết định rõ hơn là nhiều thông tin.',
-    tags: ['đầu tư', 'rủi ro', 'thanh khoản'],
-    barrier_match: ['Niềm tin', 'Chưa đủ thông tin'],
-    journey_match: ['Tò mò', 'Quan tâm', 'So sánh'],
-    trust_range: [0, 80],
-    priority: 82,
-  },
-  {
-    id: 'P-0005',
-    title: 'Khách thiếu niềm tin cần được xác nhận nỗi lo',
-    summary: 'Không vội chốt. Hãy hỏi khách đang lo điều gì nhất, cần bằng chứng nào và ai cần cùng xem để yên tâm hơn.',
-    tags: ['niềm tin', 'phản đối', 'gia đình'],
-    barrier_match: ['Niềm tin', 'Gia đình'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 59],
-    priority: 90,
-  },
-  {
-    id: 'P-0008',
-    title: 'Khi khách nói giá, phải tách giá khỏi tổng chi phí và giá trị',
-    summary: 'Không né giá, nhưng cũng không tranh luận. Hỏi khách đang lo tổng tiền, dòng tiền thanh toán hay cảm giác chưa thấy đáng.',
-    tags: ['giá', 'tài chính', 'đàm phán'],
-    barrier_match: ['Giá', 'Tài chính'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 100],
-    priority: 96,
-  },
-  {
-    id: 'P-0011',
-    title: 'Pháp lý: nói đúng phần đã xác nhận, không nói quá',
-    summary: 'Khi khách hỏi pháp lý, chỉ trả lời phần có tài liệu. Nếu chưa chắc, nói cần kiểm tra tài liệu chính thức trước khi xác nhận.',
-    tags: ['pháp lý', 'niềm tin', 'an toàn'],
-    barrier_match: ['Pháp lý', 'Niềm tin'],
-    journey_match: ['Tò mò', 'Quan tâm', 'So sánh'],
-    trust_range: [0, 100],
-    priority: 94,
-  },
-  {
-    id: 'P-0014',
-    title: 'Khách gia đình cần đưa người quyết định vào cuộc sớm',
-    summary: 'Nếu vợ/chồng/gia đình ảnh hưởng quyết định, đừng chăm một người quá lâu. Mục tiêu là mời đúng người cùng xem thông tin.',
-    tags: ['gia đình', 'người quyết định', 'follow-up'],
-    barrier_match: ['Gia đình', 'Niềm tin'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [35, 100],
-    priority: 88,
-  },
-]
+import { decisionRegistryV1 } from './decisionRegistry/index.js'
+import { knowledgeRegistryV1 } from './knowledgeRegistry/index.js'
+import { sellingKeyRegistryV1 } from './sellingKeyRegistry/index.js'
 
-export const decisionRegistry = [
-  {
-    id: 'DB-0001',
-    title: 'Xác nhận nhu cầu trước khi tư vấn',
-    reason: 'Khách chưa đủ dữ liệu nhu cầu hoặc đang ở giai đoạn tò mò.',
-    tags: ['nhu cầu', 'mở đầu'],
-    barrier_match: ['Chưa thấy nhu cầu', 'Chưa đủ thông tin'],
-    decision_maker_match: [],
-    journey_match: ['Tò mò', 'Quan tâm'],
-    trust_range: [0, 100],
-    priority: 76,
-  },
-  {
-    id: 'DB-0004',
-    title: 'Đưa người quyết định vào bước tiếp theo',
-    reason: 'Decision Maker là vợ/chồng/gia đình/công ty nên cần chốt cách đưa đúng người vào cuộc.',
-    tags: ['decision maker', 'gia đình'],
-    barrier_match: ['Gia đình', 'Niềm tin'],
-    decision_maker_match: ['Vợ', 'Chồng', 'Gia đình', 'Công ty'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 100],
-    priority: 95,
-  },
-  {
-    id: 'DB-0007',
-    title: 'Không chốt khi Trust thấp',
-    reason: 'Trust Score thấp, cần xây niềm tin trước khi xin quyết định.',
-    tags: ['trust', 'niềm tin'],
-    barrier_match: ['Niềm tin', 'Pháp lý', 'Chưa đủ thông tin'],
-    decision_maker_match: [],
-    journey_match: ['Tò mò', 'Quan tâm', 'So sánh'],
-    trust_range: [0, 39],
-    priority: 98,
-  },
-  {
-    id: 'DB-0009',
-    title: 'Tách phản đối giá thành câu hỏi tài chính',
-    reason: 'Barrier là Giá/Tài chính, cần hỏi rõ khách đang vướng tổng giá, dòng tiền hay giá trị cảm nhận.',
-    tags: ['giá', 'tài chính'],
-    barrier_match: ['Giá', 'Tài chính'],
-    decision_maker_match: [],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 100],
-    priority: 93,
-  },
-]
+function toLegacyKnowledge(item) {
+  return {
+    id: item.id,
+    title: item.title,
+    summary: item.summary,
+    tags: item.tags || [],
+    barrier_match: item.matching?.barriers || [],
+    journey_match: item.matching?.journeys || [],
+    trust_range: item.matching?.trustRange || [0, 100],
+    priority: item.priority || 0,
+  }
+}
 
-export const sellingReminderRegistry = [
-  {
-    id: 'SR-0001',
-    text: 'Đừng chốt. Xây niềm tin trước.',
-    tags: ['trust thấp', 'niềm tin'],
-    barrier_match: ['Niềm tin', 'Pháp lý', 'Chưa đủ thông tin'],
-    journey_match: ['Tò mò', 'Quan tâm'],
-    trust_range: [0, 39],
-    priority: 100,
-  },
-  {
-    id: 'SR-0002',
-    text: 'Nếu có vợ/chồng/gia đình ảnh hưởng, hỏi cách đưa người đó cùng xem thông tin.',
-    tags: ['decision maker', 'gia đình'],
-    barrier_match: ['Gia đình', 'Niềm tin'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 100],
-    priority: 92,
-  },
-  {
-    id: 'SR-0003',
-    text: 'Khách hỏi giá: trả lời thẳng, rồi hỏi đang vướng tổng tiền hay dòng tiền.',
-    tags: ['giá'],
-    barrier_match: ['Giá', 'Tài chính'],
-    journey_match: ['Quan tâm', 'So sánh'],
-    trust_range: [0, 100],
-    priority: 90,
-  },
-  {
-    id: 'SR-0004',
-    text: 'Chỉ gửi đúng tài liệu liên quan đến barrier hiện tại, không đổ thêm thông tin.',
-    tags: ['tài liệu', 'follow-up'],
-    barrier_match: ['Chưa đủ thông tin', 'Niềm tin', 'Pháp lý'],
-    journey_match: ['Quan tâm', 'So sánh', 'Chờ'],
-    trust_range: [0, 100],
-    priority: 84,
-  },
-]
+function toLegacyDecision(item) {
+  return {
+    id: item.id,
+    title: item.title,
+    reason: item.reason,
+    tags: item.tags || [],
+    barrier_match: item.matching?.barriers || [],
+    decision_maker_match: item.matching?.decisionMakers || [],
+    journey_match: item.matching?.journeys || [],
+    trust_range: item.matching?.trustRange || [0, 100],
+    priority: item.priority || 0,
+  }
+}
+
+function toLegacySellingKey(item) {
+  return {
+    id: item.id,
+    text: item.text,
+    tags: item.tags || [],
+    barrier_match: item.matching?.barriers || [],
+    journey_match: item.matching?.journeys || [],
+    trust_range: item.matching?.trustRange || [0, 100],
+    priority: item.priority || 0,
+  }
+}
+
+export const knowledgeRegistry = knowledgeRegistryV1
+  .filter((item) => item.status === 'active')
+  .map(toLegacyKnowledge)
+
+export const decisionRegistry = decisionRegistryV1
+  .filter((item) => item.status === 'active')
+  .map(toLegacyDecision)
+
+export const sellingReminderRegistry = sellingKeyRegistryV1
+  .filter((item) => item.status === 'active')
+  .map(toLegacySellingKey)
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase()
