@@ -3,6 +3,16 @@ import { createRoot } from 'react-dom/client'
 import { recommendKnowledgeForCustomer } from './data/knowledgeRegistry.js'
 import { customerPsychologyEngine } from './customerPsychologyEngine.js'
 import { captureKnowledgeCandidates, loadKnowledgeCandidates, updateKnowledgeCandidateStatus } from './knowledgeCandidateEngine.js'
+import { resolveKnowledge } from './knowledgeResolver.js'
+import {
+  getCustomerBudget,
+  getCustomerConfirmedNeed,
+  getCustomerDecisionMaker,
+  getCustomerFollowUpDate,
+  getCustomerNextAction,
+  getCustomerStage,
+  getCustomerTrustScore,
+} from './customerSelectors.js'
 import './styles.css'
 
 const today = new Intl.DateTimeFormat('vi-VN', {
@@ -856,8 +866,8 @@ function buildReactivationQueue(customers, state) {
 
   if (!Array.isArray(batchIds)) {
     batchIds = customers
-      .filter((customer) => customer.phone && compareDate(customer.followUpDate) < 0 && !assignedIds.includes(customer.id))
-      .sort((a, b) => String(a.followUpDate || '').localeCompare(String(b.followUpDate || '')) || String(a.name || '').localeCompare(String(b.name || '')))
+      .filter((customer) => customer.phone && compareDate(getCustomerFollowUpDate(customer)) < 0 && !assignedIds.includes(customer.id))
+      .sort((a, b) => String(getCustomerFollowUpDate(a) || '').localeCompare(String(getCustomerFollowUpDate(b) || '')) || String(a.name || '').localeCompare(String(b.name || '')))
       .slice(0, reactivationBatchSize)
       .map((customer) => customer.id)
   }
@@ -931,18 +941,21 @@ function buildFollowUpGroups(customers) {
   ]
 
   customers.forEach((customer) => {
-    const diff = compareDate(customer.followUpDate)
+    const followUpDate = getCustomerFollowUpDate(customer)
+    const nextAction = getCustomerNextAction(customer)
+    const diff = compareDate(followUpDate)
     const group = diff < 0 ? groups[0] : diff === 0 ? groups[1] : diff <= 86400000 ? groups[2] : null
     if (!group) return
     group.items.push({
       customer,
       name: customer.shortName,
-      stage: customer.stage,
-      reason: customer.nextAction || customer.snapshot.nextAction,
+      stage: getCustomerStage(customer),
+      reason: nextAction,
       coach: customer.coach.focus,
       knowledge: customer.coach.knowledge,
       decision: customer.coach.decision,
-      nextAction: customer.nextAction || customer.action,
+      followUpDate,
+      nextAction,
     })
   })
 
@@ -976,13 +989,16 @@ function buildInboxItems(customers, completedIds) {
 
   customers.forEach((customer) => {
     const id = customer.id
+    const followUpDate = getCustomerFollowUpDate(customer)
+    const nextAction = getCustomerNextAction(customer)
     const item = {
       id,
       customer,
       name: customer.shortName,
-      reason: customer.followUpDate ? `Follow-up ${customer.followUpDate}: ${customer.nextAction}` : customer.nextAction,
+      stage: getCustomerStage(customer),
+      reason: followUpDate ? `Follow-up ${followUpDate}: ${nextAction}` : nextAction,
       coach: customer.coach?.focus || 'Xác nhận nhu cầu trước khi tư vấn.',
-      nextAction: customer.nextAction || customer.action || 'Gọi xác nhận nhu cầu',
+      nextAction,
     }
 
     if (completedIds.includes(id)) {
@@ -990,8 +1006,8 @@ function buildInboxItems(customers, completedIds) {
       return
     }
 
-    const diff = compareDate(customer.followUpDate)
-    if (diff < 0 || customer.trustScore >= 75) groups.urgent.push(item)
+    const diff = compareDate(followUpDate)
+    if (diff < 0 || getCustomerTrustScore(customer) >= 75) groups.urgent.push(item)
     else if (diff === 0) groups.today.push(item)
     else groups.waiting.push(item)
   })
@@ -1009,7 +1025,7 @@ function buildDealPipelineHealth(customers) {
     if (!hasTimeline) health.missingTimeline += 1
     if (!signals.budgetConfirmed) health.missingBudget += 1
     if (!signals.decisionMakerConfirmed) health.missingDecisionMaker += 1
-    if (signals.meetingBooked || customer.stage === 'Có hẹn') health.meeting += 1
+    if (signals.meetingBooked || getCustomerStage(customer) === 'Có hẹn') health.meeting += 1
     return health
   }, {
     ready: 0,
@@ -1289,19 +1305,20 @@ function App() {
   const [developerMode, setDeveloperMode] = useState(() => localStorage.getItem('huy-advisor-os-developer-mode') === '1')
   const [knowledgeCandidates, setKnowledgeCandidates] = useState(loadKnowledgeCandidates)
   const sortedChecklist = [...checklist].sort((a, b) => Number(completedTasks[a.id]) - Number(completedTasks[b.id]))
-  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId)
-  const directCallCustomer = customers.find((customer) => customer.id === directCallCustomerId)
-  const dealPipelineHealth = buildDealPipelineHealth(customers)
-  const todaySalesDNA = collectSalesDNA(customers, todayIso)
+  const activeCustomers = customers.filter((customer) => !customer.archived)
+  const selectedCustomer = activeCustomers.find((customer) => customer.id === selectedCustomerId)
+  const directCallCustomer = activeCustomers.find((customer) => customer.id === directCallCustomerId)
+  const dealPipelineHealth = buildDealPipelineHealth(activeCustomers)
+  const todaySalesDNA = collectSalesDNA(activeCustomers, todayIso)
   const kpisFromData = [
-    { label: 'Calls', sublabel: 'Cuộc gọi đã log hôm nay', done: getTodayTimeline(customers, 'Call').length + getTodayTimeline(customers, 'Call Review').length, target: 15, tone: 'green', priority: true },
-    { label: 'Follow-up', sublabel: 'Khách cần chăm lại', done: buildFollowUpGroups(customers).reduce((sum, group) => sum + group.items.length, 0), target: 8, tone: 'green' },
-    { label: 'Meeting', sublabel: 'Cuộc hẹn đã ghi nhận', done: getTodayTimeline(customers, 'Meeting').length, target: 3, tone: 'orange' },
+    { label: 'Calls', sublabel: 'Cuộc gọi đã log hôm nay', done: getTodayTimeline(activeCustomers, 'Call').length + getTodayTimeline(activeCustomers, 'Call Review').length, target: 15, tone: 'green', priority: true },
+    { label: 'Follow-up', sublabel: 'Khách cần chăm lại', done: buildFollowUpGroups(activeCustomers).reduce((sum, group) => sum + group.items.length, 0), target: 8, tone: 'green' },
+    { label: 'Meeting', sublabel: 'Cuộc hẹn đã ghi nhận', done: getTodayTimeline(activeCustomers, 'Meeting').length, target: 3, tone: 'orange' },
     { label: 'Video', sublabel: 'Video cần gửi / nhắc xem', done: 2, target: 5, tone: 'gray' },
   ]
 
   useEffect(() => {
-    const queue = buildReactivationQueue(customers, reactivationState)
+    const queue = buildReactivationQueue(activeCustomers, reactivationState)
     if (reactivationState.batches?.[queue.batchKey]) return
     const nextState = {
       ...reactivationState,
@@ -1413,6 +1430,41 @@ function App() {
     })
   }
 
+  const archiveCustomer = (customerId) => {
+    const customer = customers.find((item) => item.id === customerId)
+    if (!customer) return
+
+    const confirmed = window.confirm(`Bạn chắc muốn lưu trữ khách "${customer.shortName || customer.name}"? Khách sẽ không còn xuất hiện trong danh sách chính.`)
+    if (!confirmed) return
+
+    const doubleConfirmed = window.confirm('Xác nhận lần 2: lưu trữ khách này khỏi danh sách chính?')
+    if (!doubleConfirmed) {
+      setBackupNotice('Đã hủy lưu trữ khách. Dữ liệu giữ nguyên.')
+      return
+    }
+
+    setCustomers((currentCustomers) => {
+      const nextCustomers = currentCustomers.map((item, index) => {
+        if (item.id !== customerId) return item
+        return normalizeCustomer({
+          ...item,
+          archived: true,
+          archivedAt: new Date().toISOString(),
+          archivedReason: 'User archived from Customer360',
+          updatedDate: new Date().toISOString(),
+        }, index)
+      })
+      saveCustomers(nextCustomers)
+      return nextCustomers
+    })
+
+    setSelectedCustomerId(null)
+    setDirectCallCustomerId(null)
+    setInboxCall(null)
+    setActiveView('today')
+    setBackupNotice(`Đã lưu trữ khách ${customer.shortName || customer.name}.`)
+  }
+
   const completeInboxItem = (itemId) => {
     setCompletedInboxItems((current) => {
       const next = Array.from(new Set([...current, itemId]))
@@ -1447,7 +1499,7 @@ function App() {
     }))
 
     setReactivationState((current) => {
-      const queue = buildReactivationQueue(customers, current)
+      const queue = buildReactivationQueue(activeCustomers, current)
       const next = {
         ...current,
         batches: {
@@ -1479,6 +1531,7 @@ function App() {
       badge: customerInput.stage?.includes('Đàm phán') ? 'Negotiating' : customerInput.emotion?.includes('Im lặng') ? 'Silent' : 'Interested',
       action: customerInput.nextAction,
       timeline: [],
+      archived: false,
     }, customers.length)
 
     setCustomers((currentCustomers) => {
@@ -1569,6 +1622,7 @@ function App() {
         customer={selectedCustomer}
         onBack={() => setSelectedCustomerId(null)}
         onCustomerUpdate={updateCustomer}
+        onCustomerArchive={archiveCustomer}
       />
     )
   }
@@ -1577,7 +1631,7 @@ function App() {
     return (
       <FollowUpWorkspace
         onBack={() => setActiveView('today')}
-        customers={customers}
+        customers={activeCustomers}
         onCall={(customer) => setDirectCallCustomerId(customer.id)}
         reactivationState={reactivationState}
         onReactivationResult={saveReactivationResult}
@@ -1601,7 +1655,7 @@ function App() {
   if (activeView === 'inbox') {
     return (
       <AdvisorInbox
-        customers={customers}
+        customers={activeCustomers}
         completedIds={completedInboxItems}
         onBack={() => setActiveView('today')}
         onCall={(item) => setInboxCall({ customer: item.customer, itemId: item.id })}
@@ -1610,7 +1664,7 @@ function App() {
   }
 
   if (activeView === 'dailyFlow') {
-    return <TodayFlow customers={customers} onCustomerUpdate={updateCustomer} onAddCustomer={() => setActiveView('customerForm')} onKnowledgeSearch={() => setActiveView('knowledgeSearch')} onInbox={() => setActiveView('inbox')} onFollowUp={() => setActiveView('followup')} onExportBackup={handleExportBackup} onImportBackup={handleImportBackup} backupNotice={backupNotice} migrationStatus={migrationStatus} onExit={() => setActiveView('today')} />
+    return <TodayFlow customers={activeCustomers} onCustomerUpdate={updateCustomer} onCustomerArchive={archiveCustomer} onAddCustomer={() => setActiveView('customerForm')} onKnowledgeSearch={() => setActiveView('knowledgeSearch')} onInbox={() => setActiveView('inbox')} onFollowUp={() => setActiveView('followup')} onExportBackup={handleExportBackup} onImportBackup={handleImportBackup} backupNotice={backupNotice} migrationStatus={migrationStatus} onExit={() => setActiveView('today')} />
   }
 
   return (
@@ -1631,7 +1685,7 @@ function App() {
       <button className="add-customer-button knowledge-open-button" onClick={() => setActiveView('inbox')}>📥 Advisor Inbox</button>
       {migrationStatus && <div className="migration-status">{migrationStatus}</div>}
       <BackupControls
-        customerCount={customers.length}
+        customerCount={activeCustomers.length}
         notice={backupNotice}
         onExport={handleExportBackup}
         onImport={handleImportBackup}
@@ -1695,14 +1749,14 @@ function App() {
             <h2>👥 Khách ưu tiên</h2>
           </div>
           <div className="customer-list">
-            {customers.slice(0, 3).map((customer, index) => (
+            {activeCustomers.slice(0, 3).map((customer, index) => (
               <section className="customer-row" key={customer.name}>
                 <b>{index + 1}</b>
                 <div>
                   <strong>{customer.name}</strong>
                   <em className={`customer-badge badge-${customer.badge.toLowerCase()}`}>{customer.badge}</em>
-                  <span>{customer.stage} · {customer.emotion}</span>
-                  <small>{customer.action}</small>
+                  <span>{getCustomerStage(customer)} · {customer.emotion}</span>
+                  <small>{getCustomerNextAction(customer)}</small>
                 </div>
                 <button onClick={() => setSelectedCustomerId(customer.id)}>{customer.cta}</button>
               </section>
@@ -2058,6 +2112,8 @@ function latestInteraction(customer) {
 function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
   const [checkedQuestions, setCheckedQuestions] = useState({})
   const [quickView, setQuickView] = useState('')
+  const customerStage = getCustomerStage(customer)
+  const trustScore = getCustomerTrustScore(customer)
   const questions = (customer.discoveryQuestions || []).slice(0, 3)
   const knowledgeCodes = extractBriefCodes(customer.coach?.knowledge, ['P-0003', 'P-0005'])
   const decisionCodes = extractBriefCodes(customer.coach?.decision, ['DB-001', 'DB-004'])
@@ -2069,7 +2125,7 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
         <div>
           <p>SMART CALL BRIEF · {stepLabel}</p>
           <h1>{customer.shortName}</h1>
-          <span>{customer.stage} · {customer.emotion} · Trust {customer.trustScore}/100</span>
+          <span>{customerStage} · {customer.emotion} · Trust {trustScore}/100</span>
         </div>
       </header>
 
@@ -2132,7 +2188,7 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
   )
 }
 
-function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, onExit }) {
+function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, onExit }) {
   const flowCustomers = customers.slice(0, 10)
   const [step, setStep] = useState('morning')
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -2226,6 +2282,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
         customer={reviewedCustomer}
         onBack={continueAfterReviewedWorkspace}
         onCustomerUpdate={onCustomerUpdate}
+        onCustomerArchive={onCustomerArchive}
       />
     )
   }
@@ -2310,7 +2367,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
           <header className="focus-header">
             <p>STEP {currentIndex + 1} / {flowCustomers.length} · FOCUS CUSTOMER</p>
             <h1>{currentCustomer.shortName}</h1>
-            <span>{currentCustomer.stage} · {currentCustomer.emotion}</span>
+            <span>{getCustomerStage(currentCustomer)} · {currentCustomer.emotion}</span>
           </header>
           <article className="card coach-card focus-coach-card">
             <div className="card-head">
@@ -2318,7 +2375,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
             </div>
             <div className="coach-focus">
               <small>Việc cần làm ngay</small>
-              <strong>{currentCustomer.snapshot.nextAction}</strong>
+              <strong>{getCustomerNextAction(currentCustomer)}</strong>
             </div>
             <dl>
               <div>
@@ -2331,7 +2388,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
               </div>
               <div>
                 <dt>Next Action</dt>
-                <dd>{currentCustomer.action}</dd>
+                <dd>{getCustomerNextAction(currentCustomer)}</dd>
               </div>
             </dl>
             <button className="flow-call-button" onClick={() => setStep('call')}>📞 GỌI</button>
@@ -2447,8 +2504,8 @@ function FollowUpWorkspace({ customers, onBack, onCall, reactivationState, onRea
                   <b>{index + 1}</b>
                   <div>
                     <strong>{item.customer.shortName}</strong>
-                    <span>{item.customer.phone} · {item.customer.stage}</span>
-                    <small>Follow-up cũ: {item.customer.followUpDate} · {item.customer.nextAction}</small>
+                    <span>{item.customer.phone} · {item.stage}</span>
+                    <small>Follow-up cũ: {item.followUpDate || 'Chưa chọn ngày'} · {item.nextAction}</small>
                   </div>
                 </div>
                 <div className="reactivation-actions">
@@ -2550,7 +2607,7 @@ function AdvisorInbox({ customers, completedIds, onBack, onCall }) {
                 <section className="inbox-item" key={item.id}>
                   <div className="inbox-customer">
                     <strong>{item.name}</strong>
-                    <span>{item.customer.stage}</span>
+                    <span>{item.stage}</span>
                   </div>
                   <div className="inbox-detail">
                     <small>Lý do</small>
@@ -2705,7 +2762,7 @@ function buildAthenaExplanation(customer, timelineEvents = [], customerMemory = 
     customerMemory.confirmed?.concerns && `Khách từng nhắc điều lo: ${customerMemory.confirmed.concerns}.`,
     customerMemory.confirmed?.biggestBarrier && `Barrier lớn nhất đã ghi nhận: ${customerMemory.confirmed.biggestBarrier}.`,
     customerMemory.confirmed?.purchaseGoal && `Mục tiêu mua đã ghi nhận: ${customerMemory.confirmed.purchaseGoal}.`,
-    customer.stage && `Hành trình hiện tại: ${customer.stage}.`,
+    getCustomerStage(customer) && `Hành trình hiện tại: ${getCustomerStage(customer)}.`,
     timelineEvents.length > 0 && `Timeline có ${timelineEvents.length} tương tác để tham chiếu.`,
     ...(psychologyProfile.behaviorSignals || []).slice(0, 2),
   ].filter(Boolean).map((item) => cleanCoachText(item))
@@ -2813,12 +2870,15 @@ const workspaceCoachConfig = {
   },
 }
 
-function buildWorkspaceCoach(workspaceKey, conversationState = {}) {
+function buildWorkspaceCoach(workspaceKey, conversationState = {}, primaryKnowledge = null) {
   const config = workspaceCoachConfig[workspaceKey] || workspaceCoachConfig.phone
+  const knowledgeAdvice = primaryKnowledge?.workspaceAdvice || ''
+  const knowledgeCoach = primaryKnowledge?.coachGuidance || ''
   return {
     ...config,
-    coach: `${config.coach} ${conversationState.coach || ''}`.trim(),
-    recommendation: conversationState.recommendation || 'Giữ cuộc trao đổi ngắn và có next step rõ.',
+    coach: `${config.coach} ${knowledgeCoach} ${conversationState.coach || ''}`.trim(),
+    recommendation: knowledgeAdvice || conversationState.recommendation || 'Giữ cuộc trao đổi ngắn và có next step rõ.',
+    knowledge: primaryKnowledge,
   }
 }
 
@@ -2903,9 +2963,9 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {},
     item.nextAction,
     item.followUp,
   ].join(' ')).join(' ').toLowerCase()
-  const stageText = String(customer.stage || customer.journeyStage || '').toLowerCase()
-  const nextAction = firstMeaningful(customer.nextAction, customer.action, customer.snapshot?.nextAction)
-  const due = isFollowUpDue(customer.followUpDate)
+  const stageText = String(getCustomerStage(customer)).toLowerCase()
+  const nextAction = getCustomerNextAction(customer)
+  const due = isFollowUpDue(getCustomerFollowUpDate(customer))
   const hasTimeline = timelineEvents.length > 0
   const sentMaterial = timelineText.includes('tài liệu') || timelineText.includes('zalo') || timelineText.includes('bảng giá') || timelineText.includes('video')
   const hasAppointment = stageText.includes('hẹn') || timelineText.includes('hẹn') || timelineText.includes('meeting') || timelineText.includes('tham quan')
@@ -3010,7 +3070,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {},
   }
 }
 
-function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
+function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchive }) {
   const [isCallMode, setIsCallMode] = useState(false)
   const [saveNotice, setSaveNotice] = useState('')
   const [isEditingSnapshot, setIsEditingSnapshot] = useState(false)
@@ -3024,17 +3084,39 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const latestInteraction = timelineEvents[0]
   const journeyIndex = getCustomer360JourneyIndex(customer, timelineEvents)
   const diagnosis = customer.diagnosis || {}
+  const customerStage = getCustomerStage(customer)
+  const customerTrustScore = getCustomerTrustScore(customer)
+  const customerNextAction = getCustomerNextAction(customer)
+  const customerFollowUpDate = getCustomerFollowUpDate(customer)
+  const customerBudget = getCustomerBudget(customer)
+  const customerDecisionMaker = getCustomerDecisionMaker(customer)
+  const customerConfirmedNeed = getCustomerConfirmedNeed(customer)
   const psychologyProfile = Array.isArray(customer.psychologyProfile?.matchedRules) ? customer.psychologyProfile : customerPsychologyEngine({
     ...customer,
     customerMemory,
     diagnosis,
     timeline: timelineEvents,
   })
-  const knowledgeRecommendation = recommendKnowledgeForCustomer(customer, psychologyProfile)
+  const resolvedKnowledge = resolveKnowledge({
+    customer,
+    psychologyProfile,
+    matchedRules: psychologyProfile.matchedRules,
+    workspace: selectedWorkspace,
+    diagnosis,
+    stage: customerStage,
+    trustScore: customerTrustScore,
+  })
+  const primaryKnowledge = resolvedKnowledge[0]
+  const legacyRecommendation = recommendKnowledgeForCustomer(customer, psychologyProfile)
+  const knowledgeRecommendation = {
+    ...legacyRecommendation,
+    knowledge: resolvedKnowledge,
+  }
   const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
   const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
   const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
   const todayAction = buildNextBestAction(customer, timelineEvents, customerMemory, psychologyProfile)
+  const todayActionReason = primaryKnowledge?.summary || todayAction.reason
   const athenaAssessment = buildAthenaAssessment(psychologyProfile)
   const athenaExplanation = buildAthenaExplanation(customer, timelineEvents, customerMemory, diagnosis, psychologyProfile)
   const athenaUncertainty = buildAthenaUncertainty(psychologyProfile)
@@ -3042,10 +3124,10 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const athenaQuestions = (psychologyProfile.validationQuestions || []).map((item) => cleanCoachText(item)).filter(Boolean).slice(0, 3)
   const athenaDoNotDo = (psychologyProfile.doNotDo || []).map((item) => cleanCoachText(item)).filter(Boolean).slice(0, 3)
   const athenaConversationState = buildAthenaConversationState(athenaConversationAnswers, athenaQuestions, athenaCoach)
-  const workspaceCoach = buildWorkspaceCoach(selectedWorkspace, athenaConversationState)
+  const workspaceCoach = buildWorkspaceCoach(selectedWorkspace, athenaConversationState, primaryKnowledge)
   const conversationAnswersForReview = formatConversationAnswers(athenaConversationAnswers, athenaQuestions)
   const psychologyInsight = buildPsychologyInsight({ customer, timelineEvents, customerMemory, diagnosis, psychologyProfile, questions: athenaQuestions })
-  const todayActionInsight = buildTodayActionInsight(todayAction, psychologyProfile)
+  const todayActionInsight = buildTodayActionInsight({ ...todayAction, reason: todayActionReason }, psychologyProfile)
   const workspaceInsight = buildWorkspaceInsight(workspaceCoach, psychologyProfile)
   const thingsToAvoid = [
     firstMeaningful(customer.coach?.mistake, customerMemory.cautions[0], customerMemory.confirmed.biggestBarrier, 'Đừng nói quá nhiều trước khi hiểu khách.'),
@@ -3061,16 +3143,51 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
     specialNotes: customerMemory.specialNotes,
   })
   const [snapshotForm, setSnapshotForm] = useState({
-    confirmedNeed: customer.snapshot.confirmedNeed,
+    name: customer.name || customer.shortName || '',
+    phone: customer.phone || '',
+    zalo: customer.zalo || '',
+    email: customer.email || '',
+    confirmedNeed: customerConfirmedNeed,
     hypothesis: customer.snapshot.hypothesis,
-    decisionMaker: customer.snapshot.decisionMaker,
-    budget: customer.snapshot.budget,
-    nextAction: customer.snapshot.nextAction,
-    stage: customer.stage,
+    decisionMaker: customerDecisionMaker,
+    budget: customerBudget,
+    nextAction: customerNextAction,
+    stage: customerStage,
     emotion: customer.emotion,
-    trustScore: customer.trustScore,
-    followUpDate: customer.followUpDate,
+    trustScore: customerTrustScore,
+    followUpDate: customerFollowUpDate,
+    longTermMemoryNote: customerMemory.specialNotes.join('\n'),
   })
+
+  useEffect(() => {
+    setMemoryForm({
+      confirmed: { ...customerMemory.confirmed },
+      people: customerMemory.people,
+      family: customerMemory.family,
+      interests: customerMemory.interests,
+      cautions: customerMemory.cautions,
+      specialNotes: customerMemory.specialNotes,
+    })
+    setSnapshotForm({
+      name: customer.name || customer.shortName || '',
+      phone: customer.phone || '',
+      zalo: customer.zalo || '',
+      email: customer.email || '',
+      confirmedNeed: customerConfirmedNeed,
+      hypothesis: customer.snapshot.hypothesis,
+      decisionMaker: customerDecisionMaker,
+      budget: customerBudget,
+      nextAction: customerNextAction,
+      stage: customerStage,
+      emotion: customer.emotion,
+      trustScore: customerTrustScore,
+      followUpDate: customerFollowUpDate,
+      longTermMemoryNote: customerMemory.specialNotes.join('\n'),
+    })
+    setIsEditingSnapshot(false)
+    setIsEditingMemory(false)
+    setSaveNotice('')
+  }, [customer.id])
 
   const handleCallReviewSave = (review) => {
     saveReviewToCustomer(customer, review, onCustomerUpdate)
@@ -3083,7 +3200,13 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   }
 
   const saveSnapshot = () => {
+    const nextName = snapshotForm.name.trim() || customer.name || customer.shortName || 'Khách mới'
     onCustomerUpdate(customer.id, {
+      name: nextName,
+      shortName: nextName,
+      phone: snapshotForm.phone,
+      zalo: snapshotForm.zalo,
+      email: snapshotForm.email,
       stage: snapshotForm.stage,
       emotion: snapshotForm.emotion,
       trustScore: Number(snapshotForm.trustScore),
@@ -3100,8 +3223,23 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
         budget: snapshotForm.budget,
         nextAction: snapshotForm.nextAction,
       },
+      customerMemory: {
+        ...customer.customerMemory,
+        confirmed: {
+          ...(customer.customerMemory?.confirmed || customerMemory.confirmed),
+          purchaseGoal: snapshotForm.confirmedNeed,
+          budget: snapshotForm.budget,
+          decisionMaker: snapshotForm.decisionMaker,
+        },
+        people: customerMemory.people,
+        family: customerMemory.family,
+        interests: customerMemory.interests,
+        cautions: customerMemory.cautions,
+        specialNotes: normalizeMemoryList(snapshotForm.longTermMemoryNote),
+        updatedAt: new Date().toISOString(),
+      },
     })
-    setSaveNotice('Đã lưu Customer Snapshot')
+    setSaveNotice('Đã lưu thông tin khách')
     setIsEditingSnapshot(false)
   }
 
@@ -3151,12 +3289,45 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
           <p>HUY ADVISOR OS · CUSTOMER 360</p>
           <h1>{customer.shortName}</h1>
           <div className="customer-header-meta">
-            <span className={`stage-pill badge-${customer.badge.toLowerCase()}`}>{customer.stage}</span>
-            <span>Trust Score: <strong>{customer.trustScore}/100</strong></span>
+            <span className={`stage-pill badge-${customer.badge.toLowerCase()}`}>{customerStage}</span>
+            <span>Trust Score: <strong>{customerTrustScore}/100</strong></span>
             <span>Emotion: <strong>{customer.emotion}</strong></span>
           </div>
         </section>
+        <aside className="customer-header-actions">
+          <button className="secondary-button" onClick={() => setIsEditingSnapshot(true)}>Sửa khách</button>
+          <button className="secondary-button danger-button" onClick={() => onCustomerArchive(customer.id)}>Lưu trữ khách</button>
+        </aside>
       </header>
+
+      {isEditingSnapshot && (
+        <section className="card customer-form-card customer-edit-card">
+          <div className="card-head">
+            <h2>Sửa khách</h2>
+            <p>Cập nhật thông tin cơ bản, không làm mất Timeline hay dữ liệu phân tích.</p>
+          </div>
+          <div className="customer-form-grid">
+            <label><span>Họ tên</span><input value={snapshotForm.name} onChange={(event) => updateSnapshotField('name', event.target.value)} /></label>
+            <label><span>Điện thoại</span><input value={snapshotForm.phone} onChange={(event) => updateSnapshotField('phone', event.target.value)} /></label>
+            <label><span>Zalo</span><input value={snapshotForm.zalo} onChange={(event) => updateSnapshotField('zalo', event.target.value)} /></label>
+            <label><span>Email</span><input type="email" value={snapshotForm.email} onChange={(event) => updateSnapshotField('email', event.target.value)} /></label>
+            <label><span>Journey Stage</span><select value={snapshotForm.stage} onChange={(event) => updateSnapshotField('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+            <label><span>Emotion</span><select value={snapshotForm.emotion} onChange={(event) => updateSnapshotField('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+            <label><span>Trust Score</span><input type="number" min="0" max="100" value={snapshotForm.trustScore} onChange={(event) => updateSnapshotField('trustScore', event.target.value)} /></label>
+            <label><span>Follow-up Date</span><input type="date" value={snapshotForm.followUpDate} onChange={(event) => updateSnapshotField('followUpDate', event.target.value)} /></label>
+            <label className="form-wide"><span>Next Action</span><textarea value={snapshotForm.nextAction} onChange={(event) => updateSnapshotField('nextAction', event.target.value)} /></label>
+            <label className="form-wide"><span>Nhu cầu đã xác nhận</span><textarea value={snapshotForm.confirmedNeed} onChange={(event) => updateSnapshotField('confirmedNeed', event.target.value)} /></label>
+            <label className="form-wide"><span>Giả thuyết chưa xác nhận</span><textarea value={snapshotForm.hypothesis} onChange={(event) => updateSnapshotField('hypothesis', event.target.value)} /></label>
+            <label className="form-wide"><span>Người quyết định</span><textarea value={snapshotForm.decisionMaker} onChange={(event) => updateSnapshotField('decisionMaker', event.target.value)} /></label>
+            <label className="form-wide"><span>Ngân sách</span><textarea value={snapshotForm.budget} onChange={(event) => updateSnapshotField('budget', event.target.value)} /></label>
+            <label className="form-wide"><span>Điều cần nhớ</span><textarea value={snapshotForm.longTermMemoryNote} onChange={(event) => updateSnapshotField('longTermMemoryNote', event.target.value)} /></label>
+          </div>
+          <div className="edit-action-row">
+            <button className="flow-start-button" onClick={saveSnapshot}>✅ Lưu thay đổi</button>
+            <button className="secondary-button" onClick={() => setIsEditingSnapshot(false)}>Hủy</button>
+          </div>
+        </section>
+      )}
 
       <section className="customer-detail-grid">
         <article className="card customer360-overview-card">
@@ -3170,7 +3341,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
             <InfoRow label="Điều cần nhớ" value={overviewMemory || 'Chưa ghi nhận điều cần nhớ lâu dài.'} highlight />
             <InfoRow label="Customer Stage" value={diagnosis.customerStage || 'Chưa đánh giá'} />
             <InfoRow label="Barrier" value={diagnosis.barrier || 'Chưa đánh giá'} />
-            <InfoRow label="Decision Maker" value={diagnosis.decisionMaker || customer.snapshot?.decisionMaker || 'Chưa rõ'} />
+            <InfoRow label="Decision Maker" value={customerDecisionMaker || 'Chưa rõ'} />
             <InfoRow label="Interest" value={formatCustomer360Value(diagnosis.interest, 'Chưa đánh giá')} highlight />
           </div>
         </article>
@@ -3309,7 +3480,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
             <InfoRow label="Lần cuối liên hệ" value={latestInteraction?.displayDateTime || 'Chưa có tương tác.'} />
             <InfoRow label="Đã gửi gì" value={latestInteraction?.knowledge || latestInteraction?.decision || latestInteraction?.displayType || 'Chưa ghi nhận.'} />
             <InfoRow label="Khách phản hồi gì" value={latestInteraction?.summary || 'Chưa ghi nhận phản hồi.'} />
-            <InfoRow label="Follow-up khi nào" value={latestInteraction?.followUp || customer.followUpDate || 'Chưa chọn ngày.'} highlight />
+            <InfoRow label="Follow-up khi nào" value={latestInteraction?.followUp || customerFollowUpDate || 'Chưa chọn ngày.'} highlight />
           </div>
         </article>
 
@@ -3334,7 +3505,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
                 <p>{buildInsightText({
                   observation: todayAction.action,
                   meaning: todayAction.goal,
-                  evidence: [todayAction.reason, psychologyProfile.decisionBarrier, psychologyProfile.trustGap].filter(Boolean),
+                  evidence: [todayActionReason, psychologyProfile.decisionBarrier, psychologyProfile.trustGap].filter(Boolean),
                   uncertainty: 'khách có thể chưa nói hết rào cản thật.',
                   validation: todayAction.responseSteps[0],
                   ifMe: `em sẽ tập trung vào mục tiêu: ${todayAction.goal}`,
@@ -3373,6 +3544,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
                 <article className="recommendation-item" key={item.id}>
                   <strong>{item.id} · {item.title}</strong>
                   <p>{item.summary}</p>
+                  <p>{item.coachGuidance}</p>
                   <small>Vì sao CRM gợi ý: {item.why}</small>
                 </article>
               ))}
@@ -3457,6 +3629,8 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
 function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswers = [] }) {
   const [askedQuestions, setAskedQuestions] = useState({})
   const [callState, setCallState] = useState('ready')
+  const customerStage = getCustomerStage(customer)
+  const trustScore = getCustomerTrustScore(customer)
 
   const askedCount = Object.values(askedQuestions).filter(Boolean).length
   const isReview = callState === 'review'
@@ -3471,8 +3645,8 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
           <p>HUY ADVISOR OS · CALL MODE</p>
           <h1>{customer.shortName}</h1>
           <div className="customer-header-meta">
-            <span>📍 {customer.stage}</span>
-            <span>❤️ Trust: <strong>{customer.trustScore}/100</strong></span>
+            <span>📍 {customerStage}</span>
+            <span>❤️ Trust: <strong>{trustScore}/100</strong></span>
             <span>😊 Emotion: <strong>{customer.emotion}</strong></span>
           </div>
         </section>
@@ -3537,10 +3711,10 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
               <h2>👤 Customer Snapshot</h2>
             </div>
             <div className="snapshot-list">
-              <InfoRow label="Nhu cầu đã xác nhận" value={customer.snapshot.confirmedNeed} />
+              <InfoRow label="Nhu cầu đã xác nhận" value={getCustomerConfirmedNeed(customer)} />
               <InfoRow label="Giả thuyết chưa xác nhận" value={customer.snapshot.hypothesis} />
-              <InfoRow label="Người quyết định" value={customer.snapshot.decisionMaker} />
-              <InfoRow label="Next Action lần trước" value={customer.snapshot.nextAction} highlight />
+              <InfoRow label="Người quyết định" value={getCustomerDecisionMaker(customer)} />
+              <InfoRow label="Next Action lần trước" value={getCustomerNextAction(customer)} highlight />
             </div>
           </article>
 
@@ -3588,7 +3762,7 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
     salesDNANote: '',
     diagnosisCustomerStage: customer.diagnosis?.customerStage || 'Quan tâm',
     diagnosisBarrier: customer.diagnosis?.barrier || 'Niềm tin',
-    diagnosisTrustScore: customer.diagnosis?.trustScore ?? customer.trustScore ?? 50,
+    diagnosisTrustScore: getCustomerTrustScore(customer),
     diagnosisDecisionMaker: customer.diagnosis?.decisionMaker || 'Chính khách',
     diagnosisInterest: Array.isArray(customer.diagnosis?.interest) ? customer.diagnosis.interest : ['Đầu tư'],
     longTermMemoryNote: '',

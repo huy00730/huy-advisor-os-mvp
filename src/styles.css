@@ -2291,6 +2291,30 @@ button {
   margin-bottom: 18px;
 }
 
+.customer-header-actions,
+.edit-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.customer-header-actions .secondary-button,
+.edit-action-row .secondary-button,
+.edit-action-row .flow-start-button {
+  margin-top: 0;
+}
+
+.danger-button {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.customer-edit-card {
+  margin: 0 0 18px;
+}
+
 .customer-detail-header section {
   padding: 26px 30px;
   border: 1px solid rgba(20, 33, 31, .08);
