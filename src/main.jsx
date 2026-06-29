@@ -335,6 +335,88 @@ const COASTAL_200_BACKUP_URL = `https://huy-sales-os.pages.dev/api/backup?id=${C
 const todayIso = '2026-06-29'
 const reactivationBatchSize = 10
 
+const defaultDealSignals = {
+  needConfirmed: false,
+  budgetConfirmed: false,
+  timelineConfirmed: false,
+  decisionMakerConfirmed: false,
+  meetingBooked: false,
+  objectionResolved: false,
+  materialSent: false,
+  materialViewed: false,
+  replyReceived: false,
+  nextActionDefined: false,
+}
+
+const salesDNAOptions = [
+  { key: 'GoldenSentence', label: 'Golden Sentence hiệu quả' },
+  { key: 'DiscoveryQuestion', label: 'Discovery Question hiệu quả' },
+  { key: 'CoachReminder', label: 'Coach Reminder hữu ích' },
+  { key: 'ObjectionHandling', label: 'Xử lý phản đối thành công' },
+  { key: 'FollowUp', label: 'Follow-up hiệu quả' },
+]
+
+function hasMeaningfulValue(value) {
+  const normalized = String(value || '').trim().toLowerCase()
+  return Boolean(normalized) && !['chưa rõ', 'chưa xác nhận', 'chưa xác nhận.', 'chưa chọn ngày'].includes(normalized)
+}
+
+function buildSalesDNAFromReview(review, customer) {
+  const selected = Array.isArray(review.salesDNASelected) ? review.salesDNASelected : []
+  const values = {
+    GoldenSentence: customer.goldenSentence || 'Golden Sentence đã dùng trong cuộc gọi.',
+    DiscoveryQuestion: review.need || review.customerSaid || 'Discovery Question giúp làm rõ nhu cầu.',
+    CoachReminder: customer.coach?.focus || 'Coach Reminder giúp sale giữ đúng trọng tâm.',
+    ObjectionHandling: review.mainConcern || 'Phản đối đã được xử lý trong cuộc gọi.',
+    FollowUp: `${review.nextAction || customer.nextAction || 'Follow-up'} · ${review.followUpDate || 'Chưa chọn ngày'}`,
+  }
+
+  return selected.map((type) => ({
+    type,
+    label: salesDNAOptions.find((option) => option.key === type)?.label || type,
+    value: values[type] || values.GoldenSentence,
+    note: String(review.salesDNANote || '').trim(),
+    knowledgeId: review.knowledge || '',
+    decisionId: review.decision || '',
+    createdAt: new Date().toISOString(),
+  }))
+}
+
+function buildDealSignalsFromReview(review) {
+  const result = String(review.result || '')
+  const nextAction = String(review.nextAction || '')
+  return {
+    needConfirmed: hasMeaningfulValue(review.need),
+    budgetConfirmed: hasMeaningfulValue(review.budget),
+    timelineConfirmed: hasMeaningfulValue(review.buyingTimeline),
+    decisionMakerConfirmed: hasMeaningfulValue(review.decisionMaker),
+    meetingBooked: result.includes('Hẹn') || nextAction.includes('Đặt hẹn'),
+    objectionResolved: hasMeaningfulValue(review.mainConcern) && result === 'Đã trao đổi',
+    materialSent: result.includes('Gửi Zalo') || nextAction.includes('Gửi Zalo') || nextAction.includes('Gửi tài liệu'),
+    materialViewed: result.includes('Đã xem') || String(review.customerSaid || '').toLowerCase().includes('đã xem'),
+    replyReceived: result === 'Đã trao đổi' || result.includes('Hẹn') || hasMeaningfulValue(review.customerSaid),
+    nextActionDefined: hasMeaningfulValue(nextAction) && hasMeaningfulValue(review.followUpDate),
+  }
+}
+
+function calculateDealScore(customer) {
+  const missing = []
+  if (!Array.isArray(customer.timeline) || customer.timeline.length === 0) missing.push('Thiếu Timeline')
+  if (!customer.dealSignals?.budgetConfirmed) missing.push('Thiếu Budget')
+  if (!customer.dealSignals?.decisionMakerConfirmed) missing.push('Thiếu Decision Maker')
+  if (!customer.dealSignals?.timelineConfirmed) missing.push('Thiếu Timeline mua')
+  if (!customer.dealSignals?.needConfirmed) missing.push('Thiếu nhu cầu xác nhận')
+  if (!customer.dealSignals?.nextActionDefined) missing.push('Thiếu Next Action rõ')
+
+  return {
+    score: null,
+    status: 'INSUFFICIENT_DATA',
+    dataReady: missing.length === 0,
+    reason: missing.length ? missing.join(' · ') : 'Đủ dữ liệu nền tảng, Deal Score thật chưa bật',
+    updatedAt: new Date().toISOString(),
+  }
+}
+
 const extraCustomers = [
   { id: 'hoa', name: 'Chị Hoa · Referral', shortName: 'Chị Hoa', stage: 'Đã kết nối Zalo', emotion: 'Quan tâm', badge: 'Interested', action: 'Gửi tài liệu phù hợp', trustScore: 68, phone: '0901000004', followUpDate: '2026-06-29' },
   { id: 'nam', name: 'Anh Nam · Marketing', shortName: 'Anh Nam', stage: 'Lead mới', emotion: 'Tò mò', badge: 'Interested', action: 'Gọi lần đầu', trustScore: 52, phone: '0901000005', followUpDate: '2026-06-30' },
@@ -348,6 +430,8 @@ const extraCustomers = [
 function normalizeCustomer(customer, index = 0) {
   const now = new Date().toISOString()
   const shortName = customer.shortName || customer.name?.split('·')[0]?.trim() || `Khách ${index + 1}`
+  const dealSignals = { ...defaultDealSignals, ...(customer.dealSignals || {}) }
+  const dealStatus = calculateDealScore({ ...customer, dealSignals, timeline: Array.isArray(customer.timeline) ? customer.timeline : [] })
   const snapshot = {
     confirmedNeed: customer.snapshot?.confirmedNeed || customer.confirmedNeeds || 'Chưa xác nhận.',
     hypothesis: customer.snapshot?.hypothesis || customer.workingHypotheses || 'Chưa xác nhận.',
@@ -393,6 +477,11 @@ function normalizeCustomer(customer, index = 0) {
     },
     snapshot,
     timeline: Array.isArray(customer.timeline) ? customer.timeline : [],
+    dealSignals,
+    dealScore: customer.dealScore ?? dealStatus.score,
+    dealScoreReason: customer.dealScoreReason || dealStatus.reason,
+    dealScoreStatus: customer.dealScoreStatus || dealStatus.status,
+    lastScoreUpdate: customer.lastScoreUpdate || dealStatus.updatedAt,
   }
 }
 
@@ -442,12 +531,15 @@ function downloadJsonFile(fileName, payload) {
 }
 
 function buildBackupPayload(customers, completedInboxItems = []) {
+  const salesDNA = collectSalesDNA(customers)
   return {
     app: 'HUY_ADVISOR_OS',
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     customerCount: customers.length,
     customers,
+    salesDNA,
+    salesDNACount: salesDNA.length,
     inboxCompleted: completedInboxItems,
     localStorage: buildLocalStorageSnapshot(),
   }
@@ -816,10 +908,55 @@ function buildInboxItems(customers, completedIds) {
   return groups
 }
 
+function buildDealPipelineHealth(customers) {
+  return customers.reduce((health, customer) => {
+    const signals = { ...defaultDealSignals, ...(customer.dealSignals || {}) }
+    const hasTimeline = Array.isArray(customer.timeline) && customer.timeline.length > 0
+    if (hasTimeline && signals.budgetConfirmed && signals.decisionMakerConfirmed && signals.timelineConfirmed && signals.needConfirmed && signals.nextActionDefined) {
+      health.ready += 1
+    }
+    if (!hasTimeline) health.missingTimeline += 1
+    if (!signals.budgetConfirmed) health.missingBudget += 1
+    if (!signals.decisionMakerConfirmed) health.missingDecisionMaker += 1
+    if (signals.meetingBooked || customer.stage === 'Có hẹn') health.meeting += 1
+    return health
+  }, {
+    ready: 0,
+    missingTimeline: 0,
+    missingBudget: 0,
+    missingDecisionMaker: 0,
+    meeting: 0,
+  })
+}
+
+function collectSalesDNA(customers, isoDate = '') {
+  return customers.flatMap((customer) => (
+    (customer.timeline || []).flatMap((item) => (
+      (Array.isArray(item.salesDNA) ? item.salesDNA : []).map((dna) => ({
+        ...dna,
+        customerId: customer.id,
+        customerName: customer.shortName || customer.name,
+        timelineId: item.id,
+        isoDate: item.isoDate,
+      }))
+    ))
+  )).filter((dna) => !isoDate || dna.isoDate === isoDate)
+}
+
+function summarizeSalesDNA(items) {
+  return salesDNAOptions.reduce((summary, option) => {
+    const found = items.find((item) => item.type === option.key)
+    summary[option.key] = found ? found.value : 'Chưa ghi nhận hôm nay.'
+    return summary
+  }, {})
+}
+
 function saveReviewToCustomer(customer, review, updateCustomer) {
   const confirmedSummary = review.confirmedSummary || review.customerSaid || 'Đã lưu nhật ký cuộc gọi.'
   const nextAction = review.nextAction || customer.nextAction
   const followUpDate = review.followUpDate || customer.followUpDate
+  const reviewDealSignals = buildDealSignalsFromReview(review)
+  const reviewSalesDNA = buildSalesDNAFromReview(review, customer)
   const timelineItem = {
     id: `timeline-${Date.now()}`,
     isoDate: todayIso,
@@ -830,26 +967,43 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     knowledge: review.knowledge,
     decision: review.decision,
     result: review.result,
+    dealSignals: reviewDealSignals,
+    salesDNA: reviewSalesDNA,
   }
 
-  updateCustomer(customer.id, (current) => ({
-    ...current,
-    stage: review.result === 'Hẹn gặp' ? 'Có hẹn' : current.stage,
-    confirmedNeeds: review.need || current.confirmedNeeds,
-    workingHypotheses: review.hypothesis || current.workingHypotheses,
-    nextAction,
-    action: nextAction,
-    followUpDate,
-    snapshot: {
-      ...current.snapshot,
-      confirmedNeed: review.need || current.snapshot.confirmedNeed,
-      hypothesis: review.hypothesis || current.snapshot.hypothesis,
-      decisionMaker: review.decisionMaker || current.snapshot.decisionMaker,
-      budget: review.budget || current.snapshot.budget,
+  updateCustomer(customer.id, (current) => {
+    const mergedDealSignals = {
+      ...defaultDealSignals,
+      ...(current.dealSignals || {}),
+      ...Object.fromEntries(Object.entries(reviewDealSignals).map(([key, value]) => [key, Boolean(current.dealSignals?.[key] || value)])),
+    }
+    const nextTimeline = [timelineItem, ...(current.timeline || [])].sort((a, b) => String(b.isoDate || '').localeCompare(String(a.isoDate || '')))
+    const dealStatus = calculateDealScore({ ...current, dealSignals: mergedDealSignals, timeline: nextTimeline })
+
+    return {
+      ...current,
+      stage: review.result === 'Hẹn gặp' ? 'Có hẹn' : current.stage,
+      confirmedNeeds: review.need || current.confirmedNeeds,
+      workingHypotheses: review.hypothesis || current.workingHypotheses,
       nextAction,
-    },
-    timeline: [timelineItem, ...(current.timeline || [])].sort((a, b) => String(b.isoDate || '').localeCompare(String(a.isoDate || ''))),
-  }))
+      action: nextAction,
+      followUpDate,
+      snapshot: {
+        ...current.snapshot,
+        confirmedNeed: review.need || current.snapshot.confirmedNeed,
+        hypothesis: review.hypothesis || current.snapshot.hypothesis,
+        decisionMaker: review.decisionMaker || current.snapshot.decisionMaker,
+        budget: review.budget || current.snapshot.budget,
+        nextAction,
+      },
+      timeline: nextTimeline,
+      dealSignals: mergedDealSignals,
+      dealScore: dealStatus.score,
+      dealScoreReason: dealStatus.reason,
+      dealScoreStatus: dealStatus.status,
+      lastScoreUpdate: dealStatus.updatedAt,
+    }
+  })
 }
 
 function Progress({ done, target, tone }) {
@@ -881,6 +1035,8 @@ function App() {
   const sortedChecklist = [...checklist].sort((a, b) => Number(completedTasks[a.id]) - Number(completedTasks[b.id]))
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId)
   const directCallCustomer = customers.find((customer) => customer.id === directCallCustomerId)
+  const dealPipelineHealth = buildDealPipelineHealth(customers)
+  const todaySalesDNA = collectSalesDNA(customers, todayIso)
   const kpisFromData = [
     { label: 'Calls', sublabel: 'Cuộc gọi đã log hôm nay', done: getTodayTimeline(customers, 'Call').length + getTodayTimeline(customers, 'Call Review').length, target: 15, tone: 'green', priority: true },
     { label: 'Follow-up', sublabel: 'Khách cần chăm lại', done: buildFollowUpGroups(customers).reduce((sum, group) => sum + group.items.length, 0), target: 8, tone: 'green' },
@@ -1297,6 +1453,29 @@ function App() {
             ))}
           </div>
         </article>
+
+        <article className="card deal-health-card">
+          <div className="card-head">
+            <h2>📊 Deal Pipeline Health</h2>
+          </div>
+          <div className="deal-health-grid">
+            <section><span>Khách đủ dữ liệu</span><strong>{dealPipelineHealth.ready}</strong></section>
+            <section><span>Thiếu Timeline</span><strong>{dealPipelineHealth.missingTimeline}</strong></section>
+            <section><span>Thiếu Budget</span><strong>{dealPipelineHealth.missingBudget}</strong></section>
+            <section><span>Thiếu Decision Maker</span><strong>{dealPipelineHealth.missingDecisionMaker}</strong></section>
+            <section><span>Có Meeting</span><strong>{dealPipelineHealth.meeting}</strong></section>
+          </div>
+        </article>
+
+        <article className="card sales-dna-widget">
+          <div className="card-head">
+            <h2>🧬 Sales DNA Collected</h2>
+          </div>
+          <div className="sales-dna-count">
+            <span>Hôm nay</span>
+            <strong>{todaySalesDNA.length} kinh nghiệm mới</strong>
+          </div>
+        </article>
       </section>
 
       <button className="start-button" onClick={() => setActiveView('dailyFlow')}>🚀 BẮT ĐẦU NGÀY LÀM VIỆC</button>
@@ -1529,6 +1708,94 @@ function DailyMissionProgress({ progress }) {
   )
 }
 
+function extractBriefCodes(text, fallback) {
+  const matches = String(text || '').match(/\b[A-Z]{1,4}-\d{3,4}\b/g)
+  return matches?.length ? matches.slice(0, 2) : fallback
+}
+
+function latestInteraction(customer) {
+  const latest = Array.isArray(customer.timeline) ? customer.timeline[0] : null
+  if (!latest) return 'Chưa có tương tác gần nhất.'
+  return `${latest.date || latest.isoDate || 'Chưa rõ ngày'} · ${latest.type || 'Tương tác'} · ${latest.confirmed || latest.next || 'Chưa rõ nội dung.'}`
+}
+
+function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
+  const [checkedQuestions, setCheckedQuestions] = useState({})
+  const [quickView, setQuickView] = useState('')
+  const questions = (customer.discoveryQuestions || []).slice(0, 3)
+  const knowledgeCodes = extractBriefCodes(customer.coach?.knowledge, ['P-0003', 'P-0005'])
+  const decisionCodes = extractBriefCodes(customer.coach?.decision, ['DB-001', 'DB-004'])
+
+  return (
+    <section className="smart-call-brief">
+      <header className="brief-header">
+        <button className="back-button" onClick={onBack}>← Quay lại</button>
+        <div>
+          <p>SMART CALL BRIEF · {stepLabel}</p>
+          <h1>{customer.shortName}</h1>
+          <span>{customer.stage} · {customer.emotion} · Trust {customer.trustScore}/100</span>
+        </div>
+      </header>
+
+      <section className="brief-grid">
+        <article className="card brief-customer-card">
+          <span>Customer</span>
+          <strong>{customer.name}</strong>
+          <p>Lần tương tác gần nhất: {latestInteraction(customer)}</p>
+        </article>
+
+        <article className="card brief-goal-card">
+          <span>Mục tiêu cuộc gọi</span>
+          <strong>{customer.callGoal}</strong>
+        </article>
+
+        <article className="card brief-questions-card">
+          <span>3 Discovery Questions</span>
+          <div>
+            {questions.map((question, index) => (
+              <label className={checkedQuestions[index] ? 'is-checked' : ''} key={question}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(checkedQuestions[index])}
+                  onChange={() => setCheckedQuestions((current) => ({ ...current, [index]: !current[index] }))}
+                />
+                <b>{index + 1}</b>
+                <em>{question}</em>
+              </label>
+            ))}
+          </div>
+        </article>
+
+        <article className="card brief-golden-card">
+          <span>Golden Sentence</span>
+          <strong>{customer.goldenSentence}</strong>
+        </article>
+
+        <article className="card brief-mini-card">
+          <span>Knowledge cần nhớ</span>
+          <strong>{knowledgeCodes.join(' · ')}</strong>
+          <button onClick={() => setQuickView(`Knowledge: ${customer.coach?.knowledge || knowledgeCodes.join(' · ')}`)}>📖 Xem nhanh</button>
+        </article>
+
+        <article className="card brief-mini-card">
+          <span>Decision cần dùng</span>
+          <strong>{decisionCodes.join(' · ')}</strong>
+          <button onClick={() => setQuickView(`Decision: ${customer.coach?.decision || decisionCodes.join(' · ')}`)}>📘 Xem nhanh</button>
+        </article>
+
+        <article className="card brief-warning-card">
+          <span>Lỗi dễ mắc</span>
+          <strong>{customer.coach?.mistake || 'Đừng nói quá nhiều trước khi hiểu khách.'}</strong>
+        </article>
+      </section>
+
+      {quickView && <aside className="brief-quick-view">{quickView}</aside>}
+
+      <button className="flow-start-button brief-start-button" onClick={onStartCall}>🚀 Bắt đầu gọi</button>
+    </section>
+  )
+}
+
 function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, onExit }) {
   const flowCustomers = customers.slice(0, 10)
   const [step, setStep] = useState('morning')
@@ -1543,6 +1810,11 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
     knowledge: [],
     decisions: [],
     mistakes: ['Nói nhiều trước khi xác nhận nhu cầu'],
+    timelineConfirmed: 0,
+    budgetConfirmed: 0,
+    decisionMakerConfirmed: 0,
+    meetingBooked: 0,
+    salesDNA: [],
   })
 
   const currentCustomer = flowCustomers[currentIndex]
@@ -1559,6 +1831,8 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
   const saveFlowReview = (review) => {
     saveReviewToCustomer(currentCustomer, review, onCustomerUpdate)
     const isLastCustomer = currentIndex + 1 >= flowCustomers.length
+    const reviewDealSignals = buildDealSignalsFromReview(review)
+    const reviewSalesDNA = buildSalesDNAFromReview(review, currentCustomer)
     setDailyStats((current) => ({
       calls: current.calls + 1,
       followUps: current.followUps + (review.nextAction.includes('Gửi Zalo') || review.nextAction.includes('Gọi lại') ? 1 : 0),
@@ -1566,6 +1840,11 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
       knowledge: Array.from(new Set([...current.knowledge, review.knowledge])),
       decisions: Array.from(new Set([...current.decisions, review.decision])),
       mistakes: current.mistakes,
+      timelineConfirmed: current.timelineConfirmed + Number(reviewDealSignals.timelineConfirmed),
+      budgetConfirmed: current.budgetConfirmed + Number(reviewDealSignals.budgetConfirmed),
+      decisionMakerConfirmed: current.decisionMakerConfirmed + Number(reviewDealSignals.decisionMakerConfirmed),
+      meetingBooked: current.meetingBooked + Number(reviewDealSignals.meetingBooked),
+      salesDNA: [...current.salesDNA, ...reviewSalesDNA],
     }))
     if (isLastCustomer) {
       setShowCompletionPopup(true)
@@ -1573,7 +1852,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
       return
     }
     setCurrentIndex((index) => index + 1)
-    setStep('call')
+    setStep('brief')
   }
 
   const goNextCustomer = () => {
@@ -1594,6 +1873,20 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
         onSaveReview={saveFlowReview}
         progress={progress}
       />
+    )
+  }
+
+  if (step === 'brief' && currentCustomer) {
+    return (
+      <main className="advisor-shell today-flow">
+        <DailyMissionProgress progress={progress} />
+        <SmartCallBrief
+          customer={currentCustomer}
+          stepLabel={`Khách ${currentIndex + 1}/${flowCustomers.length}`}
+          onBack={() => setStep('morning')}
+          onStartCall={() => setStep('call')}
+        />
+      </main>
     )
   }
 
@@ -1650,7 +1943,11 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
             onExport={onExportBackup}
             onImport={onImportBackup}
           />
-          <button className="flow-start-button" onClick={() => setStep('call')}>🚀 BẮT ĐẦU</button>
+          <article className="flow-sales-dna-widget">
+            <span>🧬 Sales DNA Collected</span>
+            <strong>Hôm nay: {dailyStats.salesDNA.length} kinh nghiệm mới</strong>
+          </article>
+          <button className="flow-start-button" onClick={() => setStep('brief')}>🚀 BẮT ĐẦU</button>
         </section>
       )}
 
@@ -1721,10 +2018,22 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
             <>
               <p>HUY ADVISOR OS · DAILY REVIEW · 17:00</p>
               <h1>📊 Daily Review</h1>
+              <section className="daily-sales-dna-card">
+                <span>🧬 Sales DNA hôm nay</span>
+                <dl>
+                  <div><dt>Golden Sentence</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).GoldenSentence}</dd></div>
+                  <div><dt>Discovery Question</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).DiscoveryQuestion}</dd></div>
+                  <div><dt>Coach Reminder</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).CoachReminder}</dd></div>
+                </dl>
+              </section>
               <div className="daily-review-grid">
                 <article><span>📞 Số cuộc gọi</span><strong>{dailyStats.calls}</strong></article>
                 <article><span>💬 Follow-up</span><strong>{dailyStats.followUps}</strong></article>
                 <article><span>🤝 Cuộc hẹn</span><strong>{dailyStats.meetings}</strong></article>
+                <article><span>🕘 Timeline xác nhận</span><strong>{dailyStats.timelineConfirmed}</strong></article>
+                <article><span>💰 Budget xác nhận</span><strong>{dailyStats.budgetConfirmed}</strong></article>
+                <article><span>👥 Decision Maker xác nhận</span><strong>{dailyStats.decisionMakerConfirmed}</strong></article>
+                <article><span>📅 Meeting đã chốt</span><strong>{dailyStats.meetingBooked}</strong></article>
                 <article><span>🧠 Knowledge dùng nhiều nhất</span><strong>{mostUsedKnowledge}</strong></article>
                 <article><span>📖 Decision dùng nhiều nhất</span><strong>{mostUsedDecision}</strong></article>
                 <article><span>⚠ Lỗi lặp lại</span><strong>{dailyStats.mistakes.join(' · ')}</strong></article>
@@ -1920,6 +2229,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [isCallMode, setIsCallMode] = useState(false)
   const [saveNotice, setSaveNotice] = useState('')
   const [isEditingSnapshot, setIsEditingSnapshot] = useState(false)
+  const dealEngine = calculateDealScore(customer)
   const [snapshotForm, setSnapshotForm] = useState({
     confirmedNeed: customer.snapshot.confirmedNeed,
     hypothesis: customer.snapshot.hypothesis,
@@ -2015,6 +2325,29 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
               <dd>{customer.coach.mistake}</dd>
             </div>
           </dl>
+        </article>
+
+        <article className="card deal-engine-card">
+          <div className="card-head">
+            <h2>🧩 Deal Engine</h2>
+            <span className={dealEngine.dataReady ? 'deal-status-ready' : 'deal-status-missing'}>
+              {dealEngine.dataReady ? '🟢 Đủ dữ liệu' : '🟡 Thiếu dữ liệu'}
+            </span>
+          </div>
+          <div className="deal-score-box">
+            <small>Deal Score</small>
+            <strong>Chưa đủ dữ liệu</strong>
+          </div>
+          <div className="deal-reason">
+            <small>Lý do</small>
+            <p>{dealEngine.reason}</p>
+          </div>
+          <div className="deal-signal-row">
+            <em>{customer.dealSignals?.needConfirmed ? '✓ Need' : '○ Need'}</em>
+            <em>{customer.dealSignals?.budgetConfirmed ? '✓ Budget' : '○ Budget'}</em>
+            <em>{customer.dealSignals?.decisionMakerConfirmed ? '✓ Decision Maker' : '○ Decision Maker'}</em>
+            <em>{customer.dealSignals?.meetingBooked ? '✓ Meeting' : '○ Meeting'}</em>
+          </div>
         </article>
 
         <article className="card snapshot-card">
@@ -2208,10 +2541,24 @@ function CallReview({ customer, askedCount, onSave }) {
     nextAction: '💬 Gửi Zalo',
     followUpDate: '2026-06-30',
     followUpQuick: 'Mai',
+    salesDNASelected: [],
+    salesDNANote: '',
   })
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const toggleSalesDNA = (type) => {
+    setForm((current) => {
+      const selected = Array.isArray(current.salesDNASelected) ? current.salesDNASelected : []
+      return {
+        ...current,
+        salesDNASelected: selected.includes(type)
+          ? selected.filter((item) => item !== type)
+          : [...selected, type],
+      }
+    })
   }
 
   const confirmedSummary = [
@@ -2279,6 +2626,30 @@ function CallReview({ customer, askedCount, onSave }) {
             value={form.decision}
             onChange={(value) => updateField('decision', value)}
           />
+          <section className="sales-dna-review-block">
+            <span>Sales DNA</span>
+            <div className="sales-dna-choice-row">
+              {salesDNAOptions.map((option) => (
+                <button
+                  type="button"
+                  className={form.salesDNASelected.includes(option.key) ? 'is-selected' : ''}
+                  key={option.key}
+                  onClick={() => toggleSalesDNA(option.key)}
+                >
+                  □ {option.label}
+                </button>
+              ))}
+            </div>
+            <label>
+              <span>Tại sao hiệu quả?</span>
+              <textarea
+                className="compact-textarea"
+                value={form.salesDNANote}
+                onChange={(event) => updateField('salesDNANote', event.target.value)}
+                placeholder="Ví dụ: Câu này làm khách mở lòng hơn."
+              />
+            </label>
+          </section>
           <QuickChoiceGroup
             label="Kết quả cuộc gọi"
             options={quickReviewOptions.result}

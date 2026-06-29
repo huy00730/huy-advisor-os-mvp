@@ -595,6 +595,344 @@ button {
   font-weight: 950;
 }
 
+.smart-call-brief {
+  display: grid;
+  gap: 16px;
+}
+
+.brief-header {
+  display: grid;
+  gap: 14px;
+  padding: 28px;
+  border-radius: 30px;
+  background: #173f39;
+  color: white;
+  box-shadow: 0 24px 70px rgba(20, 33, 31, .11);
+}
+
+.brief-header .back-button {
+  width: fit-content;
+  background: rgba(255, 255, 255, .14);
+  color: white;
+}
+
+.brief-header p {
+  margin: 0 0 8px;
+  color: #d5c38e;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.brief-header h1 {
+  margin: 0;
+  color: white;
+  font-size: clamp(46px, 7vw, 82px);
+  line-height: .92;
+  letter-spacing: -.07em;
+}
+
+.brief-header span {
+  display: inline-block;
+  margin-top: 10px;
+  color: #d7e5df;
+  font-weight: 950;
+}
+
+.brief-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.brief-grid .card {
+  min-height: auto;
+}
+
+.brief-grid span,
+.brief-quick-view {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.brief-customer-card strong,
+.brief-goal-card strong,
+.brief-mini-card strong,
+.brief-warning-card strong {
+  display: block;
+  color: #173f39;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.brief-customer-card p {
+  margin: 10px 0 0;
+  color: #586861;
+  font-weight: 800;
+}
+
+.brief-goal-card {
+  background: #fffaf0;
+}
+
+.brief-questions-card {
+  grid-row: span 2;
+}
+
+.brief-questions-card > div {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.brief-questions-card label {
+  display: grid;
+  grid-template-columns: auto 32px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e2e5dc;
+  border-radius: 18px;
+  background: #fbfbf7;
+  cursor: pointer;
+}
+
+.brief-questions-card label.is-checked {
+  background: #eef7ef;
+  border-color: rgba(29, 139, 102, .24);
+}
+
+.brief-questions-card b {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #173f39;
+  color: white;
+}
+
+.brief-questions-card em {
+  color: #173f39;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.brief-golden-card {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #173f39, #1d8b66);
+}
+
+.brief-golden-card span {
+  color: #d5c38e;
+}
+
+.brief-golden-card strong {
+  display: block;
+  color: white;
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.14;
+  letter-spacing: -.04em;
+}
+
+.brief-mini-card {
+  display: grid;
+  gap: 10px;
+}
+
+.brief-mini-card button {
+  width: fit-content;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #173f39;
+  color: white;
+  font-weight: 950;
+}
+
+.brief-warning-card {
+  grid-column: span 2;
+  background: #fffaf0;
+  border-left: 8px solid #d98a24;
+}
+
+.brief-quick-view {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fffaf0;
+  color: #173f39;
+}
+
+.brief-start-button {
+  margin-top: 2px;
+}
+
+.deal-health-card,
+.deal-engine-card,
+.sales-dna-widget {
+  border-left: 8px solid #d98a24;
+}
+
+.sales-dna-count,
+.flow-sales-dna-widget,
+.daily-sales-dna-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff8e8;
+  color: #173f39;
+}
+
+.sales-dna-count span,
+.flow-sales-dna-widget span,
+.daily-sales-dna-card > span {
+  color: #9a5c00;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sales-dna-count strong,
+.flow-sales-dna-widget strong {
+  font-size: 24px;
+  letter-spacing: -.03em;
+}
+
+.flow-sales-dna-widget {
+  margin-top: 16px;
+}
+
+.daily-sales-dna-card {
+  margin: 18px 0;
+}
+
+.daily-sales-dna-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.daily-sales-dna-card div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .68);
+}
+
+.daily-sales-dna-card dt {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.daily-sales-dna-card dd {
+  margin: 0;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.deal-health-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.deal-health-grid section {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f7f8f3;
+}
+
+.deal-health-grid span,
+.deal-score-box small,
+.deal-reason small {
+  color: #6d796f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.deal-health-grid strong {
+  color: #173f39;
+  font-size: 28px;
+  font-weight: 950;
+}
+
+.deal-status-ready,
+.deal-status-missing {
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.deal-status-ready {
+  background: rgba(29, 139, 102, .12);
+  color: #126346;
+}
+
+.deal-status-missing {
+  background: #fff3cf;
+  color: #9a5c00;
+}
+
+.deal-score-box {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #fffaf0;
+}
+
+.deal-score-box strong {
+  color: #173f39;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.deal-reason {
+  margin-top: 12px;
+}
+
+.deal-reason p {
+  margin: 6px 0 0;
+  color: #173f39;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.deal-signal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.deal-signal-row em {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #f7f8f3;
+  color: #526158;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+}
+
 .focus-customer-screen {
   display: grid;
   gap: 18px;
@@ -1960,6 +2298,46 @@ button {
   border-radius: 18px;
 }
 
+.sales-dna-review-block {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #f1d79f;
+  border-radius: 20px;
+  background: #fff8e8;
+}
+
+.sales-dna-review-block > span {
+  color: #9a5c00;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sales-dna-choice-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sales-dna-choice-row button {
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid #f1d79f;
+  border-radius: 16px;
+  background: #fffdf6;
+  color: #173f39;
+  font-weight: 950;
+  text-align: left;
+}
+
+.sales-dna-choice-row button.is-selected {
+  border-color: rgba(29, 139, 102, .45);
+  background: #1d8b66;
+  color: white;
+}
+
 .review-grid span {
   color: #6d796f;
   font-size: 12px;
@@ -2235,6 +2613,50 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .brief-header {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .brief-header h1 {
+    font-size: 46px;
+  }
+
+  .brief-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brief-golden-card,
+  .brief-warning-card {
+    grid-column: auto;
+  }
+
+  .brief-questions-card {
+    grid-row: auto;
+  }
+
+  .brief-golden-card strong {
+    font-size: 24px;
+  }
+
+  .brief-mini-card button {
+    width: 100%;
+    min-height: 50px;
+  }
+
+  .deal-health-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deal-health-grid section {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .deal-score-box strong {
+    font-size: 24px;
+  }
+
   .focus-header {
     padding: 24px;
     border-radius: 24px;
@@ -2474,6 +2896,15 @@ button {
 
   .quick-choice-large {
     grid-template-columns: 1fr;
+  }
+
+  .sales-dna-choice-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-dna-count strong,
+  .flow-sales-dna-widget strong {
+    font-size: 20px;
   }
 
   .quick-choice-row button {
