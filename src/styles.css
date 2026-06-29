@@ -2221,18 +2221,39 @@ button {
   display: grid;
   align-content: space-between;
   gap: 18px;
-  min-height: 260px;
+  min-height: 420px;
   background: linear-gradient(135deg, #173f39 0%, #1d8b66 100%);
   color: white;
 }
 
-.customer360-today-card span {
-  display: block;
+.customer360-today-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.customer360-today-card span {
+  display: inline-flex;
   color: #ffdc6a;
   font-size: 12px;
   font-weight: 950;
   letter-spacing: .08em;
+}
+
+.priority-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 220, 106, .18);
+  color: #ffdc6a;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 
 .customer360-today-card h2 {
@@ -2242,12 +2263,54 @@ button {
   letter-spacing: -.05em;
 }
 
-.customer360-today-card p {
+.next-best-action-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.next-best-action-grid section,
+.response-rule-box {
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.next-best-action-grid small,
+.response-rule-box small {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, .76);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.next-best-action-grid p {
   margin: 0;
   color: #eef7f3;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 900;
   line-height: 1.35;
+}
+
+.response-rule-box {
+  margin-top: 12px;
+}
+
+.response-rule-box ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.response-rule-box li {
+  color: #eef7f3;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.38;
 }
 
 .customer360-today-card button {

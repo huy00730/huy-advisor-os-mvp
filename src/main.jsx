@@ -2480,6 +2480,131 @@ function formatCustomer360Value(value, fallback = 'Chưa ghi nhận.') {
   return hasMeaningfulValue(value) ? value : fallback
 }
 
+function isFollowUpDue(dateValue) {
+  if (!hasMeaningfulValue(dateValue)) return false
+  const followUp = new Date(dateValue)
+  if (Number.isNaN(followUp.getTime())) return false
+  const today = new Date()
+  followUp.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0)
+  return followUp.getTime() <= today.getTime()
+}
+
+function buildNextBestAction(customer, timelineEvents = [], customerMemory = {}) {
+  const timelineText = timelineEvents.map((item) => [
+    item.displayType,
+    item.title,
+    item.summary,
+    item.detail,
+    item.nextAction,
+    item.followUp,
+  ].join(' ')).join(' ').toLowerCase()
+  const stageText = String(customer.stage || customer.journeyStage || '').toLowerCase()
+  const nextAction = firstMeaningful(customer.nextAction, customer.action, customer.snapshot?.nextAction)
+  const due = isFollowUpDue(customer.followUpDate)
+  const hasTimeline = timelineEvents.length > 0
+  const sentMaterial = timelineText.includes('tài liệu') || timelineText.includes('zalo') || timelineText.includes('bảng giá') || timelineText.includes('video')
+  const hasAppointment = stageText.includes('hẹn') || timelineText.includes('hẹn') || timelineText.includes('meeting') || timelineText.includes('tham quan')
+  const silent = stageText.includes('im lặng') || timelineText.includes('im lặng') || timelineText.includes('không phản hồi') || timelineText.includes('seen')
+  const rememberedConcern = firstMeaningful(customerMemory.confirmed?.concerns, customerMemory.confirmed?.biggestBarrier, customer.mainConcern)
+
+  if (sentMaterial && due) {
+    return {
+      priority: 'Cao',
+      action: 'Gọi xác nhận khách đã xem tài liệu.',
+      reason: 'Khách đã được gửi tài liệu và follow-up đã đến hạn.',
+      goal: 'Lấy phản hồi thật, làm rõ điểm khách còn lăn tăn và chốt bước tiếp theo.',
+      responseSteps: [
+        'Nếu khách đã xem: hỏi phần nào khách quan tâm nhất.',
+        'Nếu khách chưa xem: xin phép gửi lại bản ngắn và hẹn giờ gọi lại.',
+        'Nếu khách còn lăn tăn: ghi đúng rào cản rồi hẹn bước xử lý tiếp theo.',
+      ],
+    }
+  }
+
+  if (due) {
+    return {
+      priority: 'Cao',
+      action: 'Gọi follow-up ngay hôm nay.',
+      reason: 'Follow-up đã đến hạn hoặc quá hạn.',
+      goal: 'Khơi lại cuộc trao đổi và xác nhận khách còn quan tâm không.',
+      responseSteps: [
+        'Nếu khách nghe máy: nhắc lại ngắn gọn lần trao đổi trước.',
+        'Nếu khách bận: xin khung giờ gọi lại cụ thể.',
+        'Nếu khách không còn nhu cầu: hỏi lý do để cập nhật hồ sơ.',
+      ],
+    }
+  }
+
+  if (hasAppointment) {
+    return {
+      priority: 'Cao',
+      action: 'Xác nhận lịch hẹn với khách.',
+      reason: 'Khách đang ở giai đoạn có hẹn, cần giảm rủi ro hủy lịch.',
+      goal: 'Giữ lịch chắc, xác nhận người đi cùng và chuẩn bị đúng tài liệu.',
+      responseSteps: [
+        'Nếu khách xác nhận: nhắc thời gian, địa điểm và người đi cùng.',
+        'Nếu khách do dự: hỏi vướng lịch hay còn thiếu thông tin.',
+        'Nếu khách muốn đổi lịch: chốt ngay một khung giờ mới.',
+      ],
+    }
+  }
+
+  if (!hasTimeline || stageText.includes('lead mới')) {
+    return {
+      priority: 'Cao',
+      action: 'Gọi lần đầu để xác nhận nhu cầu.',
+      reason: 'Khách chưa có lịch sử tương tác rõ ràng.',
+      goal: 'Hiểu khách quan tâm điều gì, xin kết nối Zalo và đặt follow-up.',
+      responseSteps: [
+        'Nếu khách có thời gian: hỏi nhu cầu chính trước.',
+        'Nếu khách bận: xin lịch gọi lại, không tư vấn dài.',
+        'Nếu khách xin Zalo: gửi ngắn và xin phép follow-up.',
+      ],
+    }
+  }
+
+  if (silent) {
+    return {
+      priority: 'Trung bình',
+      action: 'Nhắn Zalo ngắn để mở lại phản hồi.',
+      reason: 'Khách đã xem hoặc im lặng sau tương tác trước.',
+      goal: 'Kéo khách trả lời bằng một câu hỏi dễ phản hồi.',
+      responseSteps: [
+        'Nếu khách trả lời: chuyển sang hỏi nhu cầu hoặc rào cản.',
+        'Nếu khách chỉ seen: không gửi dồn, đặt lịch follow-up nhẹ.',
+        'Nếu khách nói bận: xin thời điểm tiện hơn.',
+      ],
+    }
+  }
+
+  if (rememberedConcern) {
+    return {
+      priority: 'Trung bình',
+      action: nextAction || 'Gọi để xử lý rào cản chính.',
+      reason: `Hồ sơ đang ghi nhận rào cản: ${rememberedConcern}.`,
+      goal: 'Xác nhận rào cản còn đúng không và thống nhất bước xử lý.',
+      responseSteps: [
+        'Nếu rào cản còn đúng: hỏi điều kiện nào giúp khách yên tâm hơn.',
+        'Nếu rào cản đã hết: chuyển sang đề xuất bước tiếp theo.',
+        'Nếu phát sinh rào cản mới: ghi vào Timeline và đặt follow-up.',
+      ],
+    }
+  }
+
+  return {
+    priority: 'Thấp',
+    action: nextAction || 'Gọi kiểm tra mức độ quan tâm.',
+    reason: 'Chưa có tín hiệu khẩn cấp trong hồ sơ hiện tại.',
+    goal: 'Cập nhật tình trạng khách và xác định next action rõ ràng.',
+    responseSteps: [
+      'Nếu khách còn quan tâm: hỏi bước tiếp theo khách muốn làm.',
+      'Nếu khách chưa sẵn sàng: đặt follow-up có ngày cụ thể.',
+      'Nếu khách không phù hợp: cập nhật trạng thái để tránh chăm sóc sai.',
+    ],
+  }
+}
+
 function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [isCallMode, setIsCallMode] = useState(false)
   const [saveNotice, setSaveNotice] = useState('')
@@ -2494,7 +2619,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
   const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
   const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
-  const todayAction = firstMeaningful(customer.nextAction, customer.action, customer.snapshot?.nextAction, customer.coach?.focus)
+  const todayAction = buildNextBestAction(customer, timelineEvents, customerMemory)
   const thingsToAvoid = [
     firstMeaningful(customer.coach?.mistake, customerMemory.cautions[0], customerMemory.confirmed.biggestBarrier, 'Đừng nói quá nhiều trước khi hiểu khách.'),
     firstMeaningful(customerMemory.cautions[1], customerMemory.confirmed.concerns, customer.workingHypotheses, 'Không ép khách quyết định khi chưa đủ niềm tin.'),
@@ -2649,9 +2774,31 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
 
         <article className="card customer360-today-card">
           <div>
-            <span>🎯 TODAY ACTION</span>
+            <div className="customer360-today-head">
+              <span>🎯 TODAY ACTION</span>
+              <strong className={`priority-pill priority-${todayAction.priority.toLowerCase().replace(' ', '-')}`}>{todayAction.priority}</strong>
+            </div>
             <h2>Hôm nay nên làm gì</h2>
-            <p>{todayAction || 'Gọi để xác nhận nhu cầu và chốt bước tiếp theo.'}</p>
+            <div className="next-best-action-grid">
+              <section>
+                <small>Việc cần làm</small>
+                <p>{todayAction.action}</p>
+              </section>
+              <section>
+                <small>Lý do</small>
+                <p>{todayAction.reason}</p>
+              </section>
+              <section>
+                <small>Mục tiêu cuộc liên hệ</small>
+                <p>{todayAction.goal}</p>
+              </section>
+            </div>
+            <div className="response-rule-box">
+              <small>Nếu khách phản hồi...</small>
+              <ul>
+                {todayAction.responseSteps.map((step, index) => <li key={`${step}-${index}`}>{step}</li>)}
+              </ul>
+            </div>
           </div>
           <button onClick={() => setIsCallMode(true)}>📞 Gọi ngay</button>
         </article>
