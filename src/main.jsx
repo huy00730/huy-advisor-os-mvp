@@ -1492,7 +1492,7 @@ function BackupControls({ customerCount, notice, onExport, onImport }) {
         <span>{customerCount} khách trong LocalStorage</span>
         {notice && <em>{notice}</em>}
       </div>
-      <button type="button" onClick={onExport}>⬇ Export JSON</button>
+      <button type="button" onClick={onExport}>📦 Backup CRM</button>
       <button type="button" onClick={() => fileInputRef.current?.click()}>⬆ Import JSON</button>
       <input
         ref={fileInputRef}
@@ -1507,12 +1507,35 @@ function BackupControls({ customerCount, notice, onExport, onImport }) {
   )
 }
 
+function DailyMissionProgress({ progress }) {
+  return (
+    <section className="daily-mission-progress" aria-label="Daily Mission Progress">
+      <div>
+        <span>Đã gọi</span>
+        <strong>{progress.calls}/{progress.callTarget}</strong>
+      </div>
+      <div>
+        <span>Follow-up</span>
+        <strong>{progress.followUps}/{progress.followUpTarget}</strong>
+      </div>
+      <div>
+        <span>Hoàn thành</span>
+        <strong>{progress.percent}%</strong>
+      </div>
+      <div className="daily-progress-bar">
+        <i style={{ width: `${progress.percent}%` }} />
+      </div>
+    </section>
+  )
+}
+
 function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, onExit }) {
-  const flowCustomers = customers.slice(0, 5)
+  const flowCustomers = customers.slice(0, 10)
   const [step, setStep] = useState('morning')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [breakNotice, setBreakNotice] = useState(false)
   const [dayClosed, setDayClosed] = useState(false)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
   const [dailyStats, setDailyStats] = useState({
     calls: 0,
     followUps: 0,
@@ -1525,9 +1548,17 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
   const currentCustomer = flowCustomers[currentIndex]
   const mostUsedKnowledge = dailyStats.knowledge[0] || 'P-0003'
   const mostUsedDecision = dailyStats.decisions[0] || 'DB-001'
+  const progress = {
+    calls: dailyStats.calls,
+    callTarget: 10,
+    followUps: dailyStats.followUps,
+    followUpTarget: 5,
+    percent: Math.min(100, Math.round((dailyStats.calls / 10) * 100)),
+  }
 
   const saveFlowReview = (review) => {
     saveReviewToCustomer(currentCustomer, review, onCustomerUpdate)
+    const isLastCustomer = currentIndex + 1 >= flowCustomers.length
     setDailyStats((current) => ({
       calls: current.calls + 1,
       followUps: current.followUps + (review.nextAction.includes('Gửi Zalo') || review.nextAction.includes('Gọi lại') ? 1 : 0),
@@ -1536,7 +1567,13 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
       decisions: Array.from(new Set([...current.decisions, review.decision])),
       mistakes: current.mistakes,
     }))
-    setStep('autoNext')
+    if (isLastCustomer) {
+      setShowCompletionPopup(true)
+      setStep('completed')
+      return
+    }
+    setCurrentIndex((index) => index + 1)
+    setStep('call')
   }
 
   const goNextCustomer = () => {
@@ -1555,12 +1592,31 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
         customer={currentCustomer}
         onBack={() => setStep('focus')}
         onSaveReview={saveFlowReview}
+        progress={progress}
       />
     )
   }
 
   return (
     <main className="advisor-shell today-flow">
+      <DailyMissionProgress progress={progress} />
+      {showCompletionPopup && (
+        <section className="mission-complete-overlay" role="dialog" aria-modal="true">
+          <article className="mission-complete-popup">
+            <h2>Hôm nay hoàn thành.</h2>
+            <p>Daily Mission đã đi hết danh sách khách hôm nay.</p>
+            <div>
+              <button onClick={() => {
+                setShowCompletionPopup(false)
+                setStep('dailyReview')
+              }}>
+                Xem Daily Review
+              </button>
+              <button className="soft-button" onClick={() => setShowCompletionPopup(false)}>Đóng</button>
+            </div>
+          </article>
+        </section>
+      )}
       {step === 'morning' && (
         <section className="flow-hero">
           <p>HUY ADVISOR OS · TODAY FLOW · 08:00</p>
@@ -1594,7 +1650,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
             onExport={onExportBackup}
             onImport={onImportBackup}
           />
-          <button className="flow-start-button" onClick={() => setStep('focus')}>🚀 BẮT ĐẦU</button>
+          <button className="flow-start-button" onClick={() => setStep('call')}>🚀 BẮT ĐẦU</button>
         </section>
       )}
 
@@ -1642,6 +1698,14 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
             <button onClick={goNextCustomer}>Có</button>
             <button className="soft-button" onClick={() => setBreakNotice(true)}>Nghỉ 5 phút</button>
           </div>
+        </section>
+      )}
+
+      {step === 'completed' && (
+        <section className="auto-next-card">
+          <p>HUY ADVISOR OS · DAILY MISSION</p>
+          <h1>Hôm nay hoàn thành.</h1>
+          <span>Đã đi hết danh sách khách hôm nay. Có thể xem Daily Review hoặc đóng popup.</span>
         </section>
       )}
 
@@ -2018,7 +2082,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   )
 }
 
-function CallMode({ customer, onBack, onSaveReview }) {
+function CallMode({ customer, onBack, onSaveReview, progress }) {
   const [askedQuestions, setAskedQuestions] = useState({})
   const [callState, setCallState] = useState('ready')
 
@@ -2027,6 +2091,7 @@ function CallMode({ customer, onBack, onSaveReview }) {
 
   return (
     <main className="advisor-shell call-mode">
+      {progress && <DailyMissionProgress progress={progress} />}
       <button className="back-button" onClick={onBack}>← Quay lại khách hàng</button>
 
       <header className="call-header">
