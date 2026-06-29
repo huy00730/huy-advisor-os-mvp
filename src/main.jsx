@@ -1039,18 +1039,20 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
   const followUpDate = review.followUpDate || customer.followUpDate
   const reviewDealSignals = buildDealSignalsFromReview(review)
   const reviewSalesDNA = buildSalesDNAFromReview(review, customer)
+  const hasLongTermMemoryNote = normalizeMemoryList(review.longTermMemoryNote).length > 0
   const timelineItem = {
     id: `timeline-${Date.now()}`,
     isoDate: todayIso,
     date: '29/06',
     type: 'Call Review',
-    confirmed: confirmedSummary,
+    confirmed: hasLongTermMemoryNote ? `${confirmedSummary} · Đã cập nhật Điều cần nhớ.` : confirmedSummary,
     next: `${nextAction} · ${followUpDate || 'Chưa chọn ngày'}`,
     knowledge: review.knowledge,
     decision: review.decision,
     result: review.result,
     dealSignals: reviewDealSignals,
     salesDNA: reviewSalesDNA,
+    memoryUpdated: hasLongTermMemoryNote,
   }
 
   updateCustomer(customer.id, (current) => {
@@ -2910,14 +2912,20 @@ function CallReview({ customer, askedCount, onSave }) {
           <strong>Đã hỏi {askedCount}/5 câu Discovery.</strong>
           <span>Knowledge: {form.knowledge} · Decision: {form.decision}</span>
         </div>
-        <label className="long-term-memory-note">
-          <span>💡 Có điều gì về khách mà anh muốn CRM nhớ lâu dài không?</span>
-          <textarea
-            value={form.longTermMemoryNote}
-            onChange={(event) => updateField('longTermMemoryNote', event.target.value)}
-            placeholder={'Ví dụ:\\nLà chủ quán cà phê.\\nRất thân thiện.\\nVợ quyết định.'}
-          />
-        </label>
+        <section className="long-term-memory-note">
+          <h3>💡 Điều cần nhớ</h3>
+          <label>
+            <span>Có điều gì về khách mà anh muốn CRM nhớ lâu dài không?</span>
+            <textarea
+              value={form.longTermMemoryNote}
+              onChange={(event) => updateField('longTermMemoryNote', event.target.value)}
+              placeholder={`* Là chủ quán cà phê.
+* Rất thân thiện.
+* Vợ quyết định.
+* Chỉ nghe máy sau 19h.`}
+            />
+          </label>
+        </section>
         <button
           className="call-primary-button"
           onClick={() => onSave({ ...form, confirmedSummary })}
