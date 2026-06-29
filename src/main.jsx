@@ -1358,6 +1358,7 @@ function App() {
         onSaveReview={(review) => {
           saveReviewToCustomer(directCallCustomer, review, updateCustomer)
           setDirectCallCustomerId(null)
+          setSelectedCustomerId(directCallCustomer.id)
         }}
       />
     )
@@ -1371,8 +1372,8 @@ function App() {
         onSaveReview={(review) => {
           saveReviewToCustomer(inboxCall.customer, review, updateCustomer)
           completeInboxItem(inboxCall.itemId)
+          setSelectedCustomerId(inboxCall.customer.id)
           setInboxCall(null)
-          setActiveView('inbox')
         }}
       />
     )
@@ -1897,6 +1898,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
   const [breakNotice, setBreakNotice] = useState(false)
   const [dayClosed, setDayClosed] = useState(false)
   const [showCompletionPopup, setShowCompletionPopup] = useState(false)
+  const [reviewedCustomerId, setReviewedCustomerId] = useState('')
   const [dailyStats, setDailyStats] = useState({
     calls: 0,
     followUps: 0,
@@ -1912,6 +1914,7 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
   })
 
   const currentCustomer = flowCustomers[currentIndex]
+  const reviewedCustomer = customers.find((customer) => customer.id === reviewedCustomerId)
   const mostUsedKnowledge = dailyStats.knowledge[0] || 'P-0003'
   const mostUsedDecision = dailyStats.decisions[0] || 'DB-001'
   const progress = {
@@ -1940,7 +1943,13 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
       meetingBooked: current.meetingBooked + Number(reviewDealSignals.meetingBooked),
       salesDNA: [...current.salesDNA, ...reviewSalesDNA],
     }))
-    if (isLastCustomer) {
+    setReviewedCustomerId(currentCustomer.id)
+    setStep('reviewedWorkspace')
+  }
+
+  const continueAfterReviewedWorkspace = () => {
+    setReviewedCustomerId('')
+    if (currentIndex + 1 >= flowCustomers.length) {
       setShowCompletionPopup(true)
       setStep('completed')
       return
@@ -1966,6 +1975,16 @@ function TodayFlow({ customers, onCustomerUpdate, onAddCustomer, onKnowledgeSear
         onBack={() => setStep('focus')}
         onSaveReview={saveFlowReview}
         progress={progress}
+      />
+    )
+  }
+
+  if (step === 'reviewedWorkspace' && reviewedCustomer) {
+    return (
+      <CustomerWorkspace
+        customer={reviewedCustomer}
+        onBack={continueAfterReviewedWorkspace}
+        onCustomerUpdate={onCustomerUpdate}
       />
     )
   }
