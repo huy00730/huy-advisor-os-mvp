@@ -81,19 +81,19 @@ function scoreKnowledge(item, context) {
 
   if (listMatches(item.barrier_match, context.barrier)) {
     score += 40
-    reasons.push(`Barrier = ${context.barrier}`)
+    reasons.push(`Rào cản: ${context.barrier}`)
   }
   if (listMatches(item.journey_match, context.customerStage)) {
     score += 24
-    reasons.push(`Customer Stage = ${context.customerStage}`)
+    reasons.push(`Mức độ quan tâm: ${context.customerStage}`)
   }
   if (rangeMatches(item.trust_range, context.trustScore)) {
     score += 16
-    reasons.push(`Trust Score ${context.trustScore}`)
+    reasons.push(`Mức độ tin tưởng ${context.trustScore}`)
   }
   if (keywordMatches(item.tags, context.interestText)) {
     score += 18
-    reasons.push(`Interest khớp: ${context.interestText}`)
+    reasons.push(`Khớp điều khách quan tâm: ${context.interestText}`)
   }
 
   return { ...item, matchScore: score, why: reasons.length ? reasons.join(' · ') : 'Phù hợp với ngữ cảnh khách hiện tại.' }
@@ -105,19 +105,19 @@ function scoreDecision(item, context) {
 
   if (listMatches(item.decision_maker_match, context.decisionMaker)) {
     score += 44
-    reasons.push(`Decision Maker = ${context.decisionMaker}`)
+    reasons.push(`Người quyết định: ${context.decisionMaker}`)
   }
   if (listMatches(item.barrier_match, context.barrier)) {
     score += 34
-    reasons.push(`Barrier = ${context.barrier}`)
+    reasons.push(`Rào cản: ${context.barrier}`)
   }
   if (listMatches(item.journey_match, context.customerStage)) {
     score += 18
-    reasons.push(`Customer Stage = ${context.customerStage}`)
+    reasons.push(`Mức độ quan tâm: ${context.customerStage}`)
   }
   if (rangeMatches(item.trust_range, context.trustScore)) {
     score += 16
-    reasons.push(`Trust Score ${context.trustScore}`)
+    reasons.push(`Mức độ tin tưởng ${context.trustScore}`)
   }
 
   return { ...item, matchScore: score, why: reasons.length ? reasons.join(' · ') : item.reason }
@@ -129,15 +129,15 @@ function scoreReminder(item, context) {
 
   if (listMatches(item.barrier_match, context.barrier)) {
     score += 30
-    reasons.push(`Barrier = ${context.barrier}`)
+    reasons.push(`Rào cản: ${context.barrier}`)
   }
   if (listMatches(item.journey_match, context.customerStage)) {
     score += 16
-    reasons.push(`Customer Stage = ${context.customerStage}`)
+    reasons.push(`Mức độ quan tâm: ${context.customerStage}`)
   }
   if (rangeMatches(item.trust_range, context.trustScore)) {
     score += 20
-    reasons.push(`Trust Score ${context.trustScore}`)
+    reasons.push(`Mức độ tin tưởng ${context.trustScore}`)
   }
 
   return { ...item, matchScore: score, why: reasons.join(' · ') }

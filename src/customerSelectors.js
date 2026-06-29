@@ -15,6 +15,14 @@ const toFiniteNumber = (value, fallback) => {
   return Number.isFinite(number) ? number : fallback
 }
 
+const normalizeDisplayText = (value) => {
+  if (typeof value !== 'string') return value
+  return value
+    .replace(/follow-up/gi, 'chăm lại')
+    .replace(/reconnect/gi, 'kết nối lại')
+    .replace(/data cũ/gi, 'dữ liệu cũ')
+}
+
 const getTimelineTime = (event = {}) => {
   return event.createdAt || event.updatedAt || event.isoDate || event.date || ''
 }
@@ -30,12 +38,12 @@ const getLatestTimelineFollowUp = (timeline) => {
 }
 
 export function getCustomerNextAction(customer = {}) {
-  return firstValue(
+  return normalizeDisplayText(firstValue(
     customer.nextAction,
     customer.snapshot?.nextAction,
     customer.action,
     'Gọi xác nhận nhu cầu.',
-  )
+  ))
 }
 
 export function getCustomerFollowUpDate(customer = {}) {
@@ -46,12 +54,12 @@ export function getCustomerFollowUpDate(customer = {}) {
 }
 
 export function getCustomerStage(customer = {}) {
-  return firstValue(
+  return normalizeDisplayText(firstValue(
     customer.stage,
     customer.journeyStage,
     customer.legacySource?.originalStage,
     'Lead mới',
-  )
+  ))
 }
 
 export function getCustomerTrustScore(customer = {}) {

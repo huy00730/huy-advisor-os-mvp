@@ -10,6 +10,15 @@ const workspaceKeyMap = {
   showHouse: 'showHouse',
 }
 
+const workspaceLabels = {
+  phone: 'điện thoại',
+  zalo: 'Zalo',
+  meeting: 'gặp trực tiếp',
+  model: 'sa bàn',
+  project: 'dự án',
+  showHouse: 'nhà mẫu',
+}
+
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase()
 }
@@ -82,12 +91,12 @@ function scoreKnowledgeItem(item, input = {}) {
 
   if (hasMeaningfulWorkspaceAdvice(workspaceAdvice)) {
     score += 70
-    reasons.push(`Workspace ${workspace} phù hợp`)
+    reasons.push(`Phù hợp với bối cảnh ${workspaceLabels[workspace] || 'hiện tại'}`)
   }
 
   if (matchedRules.length) {
     score += 55 + matchedRules.length * 12
-    reasons.push(`Khớp Psychology Rule: ${matchedRules.join(', ')}`)
+    reasons.push('Khớp với tín hiệu tâm lý đang ghi nhận')
   }
 
   const keywordMatches = keywords.filter((keyword) => keyword.length >= 2 && searchableText.includes(keyword))
@@ -98,7 +107,7 @@ function scoreKnowledgeItem(item, input = {}) {
 
   if (normalizeText(item.decisionImpact)) {
     score += 18
-    reasons.push('Có Decision Impact dùng được cho bước tiếp theo')
+    reasons.push('Có thể dùng cho bước xử lý tiếp theo')
   }
 
   return {

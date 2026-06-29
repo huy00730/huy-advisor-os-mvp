@@ -73,7 +73,7 @@ function buildUnknowns(customer, customerMemory, diagnosis, dealSignals) {
   if (!hasValue(customerMemory?.confirmed?.purchaseGoal) && !hasValue(customer?.confirmedNeeds)) unknowns.push('Mục tiêu mua thật')
   if (!hasValue(customerMemory?.confirmed?.budget) && !dealSignals?.budgetConfirmed) unknowns.push('Ngân sách/vốn thật')
   if (!hasValue(customerMemory?.confirmed?.decisionMaker) && !hasValue(diagnosis?.decisionMaker) && !dealSignals?.decisionMakerConfirmed) unknowns.push('Người quyết định')
-  if (!hasValue(customerMemory?.confirmed?.buyingTimeline) && !dealSignals?.timelineConfirmed) unknowns.push('Timeline mua')
+  if (!hasValue(customerMemory?.confirmed?.buyingTimeline) && !dealSignals?.timelineConfirmed) unknowns.push('Thời điểm mua')
   if (!hasValue(customerMemory?.confirmed?.biggestBarrier) && !hasValue(diagnosis?.barrier)) unknowns.push('Rào cản lớn nhất')
   return unknowns
 }
@@ -81,22 +81,22 @@ function buildUnknowns(customer, customerMemory, diagnosis, dealSignals) {
 function buildEvidence(customer, customerMemory, diagnosis, matchedRules, timeline) {
   return unique([
     ...matchedRules.slice(0, 3).map((rule) => `${rule.id} · ${rule.title}${rule.matchedTriggers?.length ? ` · trigger: ${rule.matchedTriggers.join(', ')}` : ''}`),
-    diagnosis?.barrier && `Diagnosis barrier: ${diagnosis.barrier}`,
-    diagnosis?.customerStage && `Customer stage: ${diagnosis.customerStage}`,
+    diagnosis?.barrier && `Rào cản đang ghi nhận: ${diagnosis.barrier}`,
+    diagnosis?.customerStage && `Mức độ quan tâm: ${diagnosis.customerStage}`,
     diagnosis?.decisionMaker && `Người quyết định: ${diagnosis.decisionMaker}`,
     customerMemory?.confirmed?.concerns && `Điều khách lo: ${customerMemory.confirmed.concerns}`,
     customerMemory?.confirmed?.biggestBarrier && `Barrier: ${customerMemory.confirmed.biggestBarrier}`,
     customerMemory?.confirmed?.purchaseGoal && `Mục tiêu mua: ${customerMemory.confirmed.purchaseGoal}`,
-    customer?.stage && `Journey: ${customer.stage}`,
-    customer?.trustScore !== undefined && `Trust Score: ${customer.trustScore}`,
-    timeline.length > 0 && `Timeline có ${timeline.length} tương tác`,
+    customer?.stage && `Hành trình hiện tại: ${customer.stage}`,
+    customer?.trustScore !== undefined && `Mức độ tin tưởng: ${customer.trustScore}`,
+    timeline.length > 0 && `Nhật ký có ${timeline.length} tương tác`,
   ]).slice(0, 6)
 }
 
 function buildTrustGap(trustScore) {
-  if (trustScore < 40) return 'Trust thấp: chưa nên chốt, cần xây niềm tin trước.'
-  if (trustScore < 70) return 'Trust trung bình: có thể tư vấn nhưng cần xác nhận lại điều khách còn lăn tăn.'
-  return 'Trust khá tốt: có thể đề xuất bước tiếp theo nếu nhu cầu đã rõ.'
+  if (trustScore < 40) return 'Niềm tin còn thấp: chưa nên chốt, cần xây niềm tin trước.'
+  if (trustScore < 70) return 'Niềm tin ở mức trung bình: có thể tư vấn nhưng cần xác nhận lại điều khách còn lăn tăn.'
+  return 'Niềm tin khá tốt: có thể đề xuất bước tiếp theo nếu nhu cầu đã rõ.'
 }
 
 function buildFallbackQuestions(unknowns) {
@@ -104,7 +104,7 @@ function buildFallbackQuestions(unknowns) {
     unknowns.includes('Mục tiêu mua thật') && 'Mục tiêu chính của anh/chị là ở, đầu tư hay giữ tài sản an toàn ạ?',
     unknowns.includes('Ngân sách/vốn thật') && 'Mình dự kiến vốn thực bỏ ra khoảng bao nhiêu là thoải mái nhất ạ?',
     unknowns.includes('Người quyết định') && 'Ngoài anh/chị ra, ai cần cùng xem thông tin trước khi mình quyết định ạ?',
-    unknowns.includes('Timeline mua') && 'Nếu thấy phù hợp, mình muốn ra quyết định trong khoảng thời gian nào ạ?',
+    unknowns.includes('Thời điểm mua') && 'Nếu thấy phù hợp, mình muốn ra quyết định trong khoảng thời gian nào ạ?',
     unknowns.includes('Rào cản lớn nhất') && 'Điều gì đang làm anh/chị chưa yên tâm nhất lúc này ạ?',
   ])
 }
@@ -151,7 +151,7 @@ export function customerPsychologyEngine(customer = {}) {
     fear: pickFirstMatchedValue(matchedRules, 'fear', hasValue(diagnosis.barrier) ? `Đang có barrier: ${diagnosis.barrier}.` : 'Chưa rõ nỗi lo chính.'),
     behaviorSignals: unique([
       ...matchedRules.map((rule) => rule.behaviorSignal),
-      timeline.length > 0 && `Đã có ${timeline.length} tương tác trong Timeline.`,
+      timeline.length > 0 && `Đã có ${timeline.length} tương tác trong nhật ký.`,
     ]).slice(0, 4),
     trustGap: buildTrustGap(trustScore),
     decisionBarrier: pickFirstMatchedValue(matchedRules, 'decisionBarrier', hasValue(diagnosis.barrier) ? diagnosis.barrier : 'Chưa rõ rào cản quyết định.'),

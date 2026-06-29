@@ -89,11 +89,11 @@ function buildCandidateSeeds(input = {}) {
   const baseEvidence = unique([
     review.customerSaid && `Khách nói: ${review.customerSaid}`,
     review.result && `Kết quả cuộc gọi: ${review.result}`,
-    review.nextAction && `Next Action: ${review.nextAction}`,
-    review.followUpDate && `Follow-up: ${review.followUpDate}`,
+    review.nextAction && `Việc tiếp theo: ${review.nextAction}`,
+    review.followUpDate && `Chăm lại: ${review.followUpDate}`,
     review.diagnosisBarrier && `Barrier: ${review.diagnosisBarrier}`,
-    review.diagnosisCustomerStage && `Customer Stage: ${review.diagnosisCustomerStage}`,
-    review.diagnosisDecisionMaker && `Decision Maker: ${review.diagnosisDecisionMaker}`,
+    review.diagnosisCustomerStage && `Mức độ quan tâm: ${review.diagnosisCustomerStage}`,
+    review.diagnosisDecisionMaker && `Người quyết định: ${review.diagnosisDecisionMaker}`,
   ])
   const ruleIds = unique(confirmedPsychologyRules.map((rule) => rule.id))
 
@@ -137,10 +137,10 @@ function buildCandidateSeeds(input = {}) {
 
   if (Array.isArray(salesIntelligence) && salesIntelligence.length) {
     salesIntelligence.forEach((item) => {
-      const title = `Sales DNA hiệu quả: ${item.type}`
+      const title = `Kinh nghiệm bán hàng hiệu quả: ${item.type}`
       seeds.push({
         title,
-        observation: safeText(item.note) || `Advisor đánh dấu ${item.type} hiệu quả trong cuộc gọi.`,
+        observation: safeText(item.note) || `Huy đánh dấu ${item.type} hiệu quả trong cuộc gọi.`,
         evidence: unique([...baseEvidence, item.value && `Giá trị: ${item.value}`, item.note && `Lý do hiệu quả: ${item.note}`]),
         workspace,
         customerId,

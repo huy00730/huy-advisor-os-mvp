@@ -25,9 +25,9 @@ const today = new Intl.DateTimeFormat('vi-VN', {
 }).format(new Date())
 
 const kpis = [
-  { label: 'Calls', sublabel: 'Cuộc gọi cần làm hôm nay', done: 6, target: 15, tone: 'green', priority: true },
-  { label: 'Follow-up', sublabel: 'Khách cần chăm lại', done: 4, target: 8, tone: 'green' },
-  { label: 'Meeting', sublabel: 'Cuộc hẹn cần chốt', done: 1, target: 3, tone: 'orange' },
+  { label: 'Cuộc gọi', sublabel: 'Cuộc gọi cần làm hôm nay', done: 6, target: 15, tone: 'green', priority: true },
+  { label: 'Chăm lại', sublabel: 'Khách cần chăm lại', done: 4, target: 8, tone: 'green' },
+  { label: 'Cuộc hẹn', sublabel: 'Cuộc hẹn cần chốt', done: 1, target: 3, tone: 'orange' },
   { label: 'Video', sublabel: 'Video cần gửi / nhắc xem', done: 2, target: 5, tone: 'gray' },
 ]
 
@@ -68,7 +68,7 @@ const priorityCustomers = [
       { date: '29/06', type: 'Cuộc gọi', confirmed: 'Quan tâm đầu tư nhưng còn lo rủi ro.', next: 'Gọi lại hỏi tiêu chí.' },
       { date: '28/06', type: 'Zalo', confirmed: 'Đã xem thông tin tổng quan.', next: 'Hỏi phản hồi.' },
       { date: '27/06', type: 'Cuộc gọi', confirmed: 'Có ngân sách và muốn giữ tài sản.', next: 'Gửi tài liệu ngắn.' },
-      { date: '25/06', type: 'Lead', confirmed: 'Nguồn data cũ cần reconnect.', next: 'Mở lại hội thoại.' },
+      { date: '25/06', type: 'Lead', confirmed: 'Nguồn dữ liệu cũ cần kết nối lại.', next: 'Mở lại hội thoại.' },
       { date: '24/06', type: 'Ghi chú', confirmed: 'Không thích bị ép quyết định.', next: 'Đi chậm, hỏi chắc.' },
     ],
   },
@@ -79,7 +79,7 @@ const priorityCustomers = [
     stage: 'Đã xem tài liệu',
     emotion: 'Cần niềm tin',
     badge: 'Interested',
-    action: 'Follow-up phản hồi sau Zalo',
+    action: 'Chăm lại phản hồi sau Zalo',
     cta: '➡ Chi tiết',
     trustScore: 64,
     callGoal: 'Lấy phản hồi sau khi xem tài liệu và xác định điều gia đình còn cần rõ.',
@@ -114,9 +114,9 @@ const priorityCustomers = [
   },
   {
     id: 'quan',
-    name: 'Anh Quân · Data cũ',
+    name: 'Anh Quân · Dữ liệu cũ',
     shortName: 'Anh Quân',
-    stage: 'Reconnect',
+    stage: 'Kết nối lại',
     emotion: 'Thờ ơ',
     badge: 'Silent',
     action: 'Nhắn mở lại cuộc trò chuyện',
@@ -133,13 +133,13 @@ const priorityCustomers = [
     ],
     coach: {
       focus: 'Mở lại cuộc trò chuyện nhẹ. Mục tiêu là xin phản hồi, chưa tư vấn sâu.',
-      knowledge: 'Data cũ cần lý do quay lại cuộc trò chuyện, không nên vào thẳng sản phẩm.',
-      decision: 'RECONNECT-001 · Gợi lại ngữ cảnh cũ và hỏi quyền gửi thông tin mới.',
+      knowledge: 'Dữ liệu cũ cần lý do quay lại cuộc trò chuyện, không nên vào thẳng sản phẩm.',
+      decision: 'Gợi lại ngữ cảnh cũ và hỏi quyền gửi thông tin mới.',
       mistake: 'Nhắn dài hoặc gửi tài liệu ngay khi khách còn im lặng.',
     },
     snapshot: {
       confirmedNeed: 'Chưa xác nhận lại nhu cầu hiện tại.',
-      hypothesis: 'Có thể đã nguội hoặc đang bận, cần một lý do ngắn để reconnect.',
+      hypothesis: 'Có thể đã nguội hoặc đang bận, cần một lý do ngắn để kết nối lại.',
       decisionMaker: 'Chưa rõ.',
       budget: 'Chưa xác nhận.',
       nextAction: 'Nhắn mở lại bằng câu ngắn, nếu phản hồi thì xin phép gửi thông tin phù hợp.',
@@ -147,8 +147,8 @@ const priorityCustomers = [
     timeline: [
       { date: '29/06', type: 'Zalo', confirmed: 'Chưa phản hồi tin nhắn mới.', next: 'Chờ và thử khung giờ khác.' },
       { date: '20/06', type: 'Cuộc gọi', confirmed: 'Nghe máy ngắn, nói đang bận.', next: 'Gửi Zalo nhẹ.' },
-      { date: '12/06', type: 'Ghi chú', confirmed: 'Từng hỏi thông tin đầu tư.', next: 'Reconnect.' },
-      { date: '05/06', type: 'Lead', confirmed: 'Data cũ từ chiến dịch trước.', next: 'Làm ấm lại.' },
+      { date: '12/06', type: 'Ghi chú', confirmed: 'Từng hỏi thông tin đầu tư.', next: 'Kết nối lại.' },
+      { date: '05/06', type: 'Lead', confirmed: 'Dữ liệu cũ từ chiến dịch trước.', next: 'Làm ấm lại.' },
       { date: '01/06', type: 'Zalo', confirmed: 'Đã nhận thông tin cũ.', next: 'Không spam.' },
     ],
   },
@@ -156,7 +156,7 @@ const priorityCustomers = [
 
 const checklist = [
   { id: 'call-minh', text: 'Gọi Anh Minh trước 9:30 để giữ nhịp quyết định.' },
-  { id: 'follow-lan', text: 'Follow-up Chị Lan bằng 1 câu hỏi mở, không gửi thêm file.' },
+  { id: 'follow-lan', text: 'Chăm lại Chị Lan bằng 1 câu hỏi mở, không gửi thêm file.' },
   { id: 'send-quan', text: 'Gửi tài liệu ngắn cho Anh Quân nếu khách đồng ý nhận Zalo.' },
 ]
 
@@ -178,10 +178,10 @@ const followUpGroups = [
       {
         customerId: 'quan',
         name: 'Anh Quân',
-        stage: 'Reconnect',
-        reason: 'Data cũ đã im lặng sau tin Zalo.',
+        stage: 'Kết nối lại',
+        reason: 'Dữ liệu cũ đã im lặng sau tin Zalo.',
         coach: 'Mở nhẹ, xin quyền hỏi nhanh. Không gửi thêm file khi khách chưa phản hồi.',
-        knowledge: 'P-0006 · Reconnect data cũ.',
+        knowledge: 'P-0006 · Kết nối lại dữ liệu cũ.',
         decision: 'DB-003 · Khách im lặng.',
         nextAction: '📞 Gọi mở lại cuộc trò chuyện',
       },
@@ -198,7 +198,7 @@ const followUpGroups = [
         reason: 'Đã xem tài liệu nhưng chưa phản hồi.',
         coach: 'Chỉ hỏi 1 câu mở. Mục tiêu là biết chị còn vướng gì.',
         knowledge: 'P-0005 · Khách gia đình cần niềm tin.',
-        decision: 'DB-002 · Follow-up sau Zalo.',
+        decision: 'DB-002 · Chăm lại sau Zalo.',
         nextAction: '📞 Gọi lấy phản hồi',
       },
       {
@@ -311,10 +311,10 @@ const knowledgeCore = [
   },
   {
     id: 'P-0006',
-    title: 'Reconnect data cũ',
+    title: 'Kết nối lại dữ liệu cũ',
     category: 'Reconnect',
     keywords: ['data cũ', 'im lặng', 'không phản hồi', 'seen', 'đã xem'],
-    summary: 'Data cũ cần mở lại nhẹ, có lý do rõ, không gửi tài liệu dài khi khách chưa phản hồi.',
+    summary: 'Dữ liệu cũ cần mở lại nhẹ, có lý do rõ, không gửi tài liệu dài khi khách chưa phản hồi.',
     goldenSentence: 'Dạ em gọi lại vì trước đây anh/chị có quan tâm, em hỏi nhanh xem hiện tại mình còn nhu cầu không để em khỏi làm phiền sai lúc.',
     checklist: ['Nhắc ngữ cảnh cũ', 'Hỏi còn nhu cầu không', 'Xin quyền gửi tin ngắn'],
     discoveryQuestions: ['Hiện tại mình còn quan tâm nữa không ạ?', 'Nếu còn xem, mình ưu tiên mục tiêu nào?', 'Em gửi một tin ngắn qua Zalo được không?'],
@@ -327,7 +327,7 @@ const knowledgeCore = [
     title: 'Không cam kết quá đà',
     category: 'Advisor Safety',
     keywords: ['cam kết', 'lợi nhuận', 'pháp lý', 'an toàn', 'rủi ro'],
-    summary: 'Advisor phải nói đúng dữ liệu xác nhận, không cam kết lợi nhuận, pháp lý hoặc tiến độ nếu chưa có nguồn chính thức.',
+    summary: 'Người tư vấn phải nói đúng dữ liệu xác nhận, không cam kết lợi nhuận, pháp lý hoặc tiến độ nếu chưa có nguồn chính thức.',
     goldenSentence: 'Em sẽ nói phần đã xác nhận; phần nào cần kiểm tra tài liệu chính thức em sẽ gửi lại sau.',
     checklist: ['Không cam kết lợi nhuận', 'Không hứa chính sách ngoài tài liệu', 'Không tư vấn pháp lý khi chưa có nguồn'],
     discoveryQuestions: ['Anh/chị muốn em kiểm tra phần nào kỹ nhất?', 'Mình cần tài liệu chính thức nào trước?', 'Em gửi lại sau khi đối chiếu được không?'],
@@ -336,6 +336,66 @@ const knowledgeCore = [
     relatedKnowledge: ['P-0004', 'P-0005'],
   },
 ]
+
+const badgeLabels = {
+  Interested: 'Đang quan tâm',
+  Negotiating: 'Đang thương lượng',
+  Silent: 'Im lặng',
+}
+
+const internalTitleMap = {
+  ...Object.fromEntries(knowledgeCore.map((item) => [item.id, item.title])),
+  'DB-001': 'Hỏi rõ mục tiêu trước khi tư vấn',
+  'DB-002': 'Không tranh luận khi khách nói giá cao',
+  'DB-003': 'Khách im lặng: mở lại nhẹ nhàng',
+  'DB-004': 'Khách bận: xin lịch gọi lại',
+  'DB-005': 'Pháp lý: chỉ nói phần đã xác nhận',
+  'DB-0001': 'Hỏi rõ mục tiêu trước khi tư vấn',
+  'DB-0002': 'Không tranh luận khi khách nói giá cao',
+  'DB-0003': 'Chưa đủ niềm tin thì chưa chốt',
+  'DB-0004': 'Khi vợ/chồng là người cùng quyết định',
+  'DB-0005': 'Khách hỏi giá ngay đầu cuộc gọi',
+  'DB-0006': 'Khách nói để suy nghĩ',
+  'DB-0007': 'Khách chưa xem tài liệu',
+  'DB-0008': 'Khách so sánh dự án khác',
+  'DB-0009': 'Khách sợ rủi ro pháp lý',
+  'DB-0010': 'Khách quan tâm đầu tư',
+}
+
+const displayBadge = (badge) => badgeLabels[badge] || badge || 'Chưa rõ'
+
+const stripInternalCodes = (value = '') => String(value)
+  .replace(/\b[A-Z]{1,6}-\d{3,4}\b\s*[·:-]?\s*/g, '')
+  .replace(/\s{2,}/g, ' ')
+  .trim()
+
+const displayInternalTitle = (value = '') => {
+  const text = String(value || '').trim()
+  if (!text) return 'Chưa ghi nhận'
+  const exact = internalTitleMap[text]
+  if (exact) return exact
+  const replaced = text.replace(/\b[A-Z]{1,6}-\d{3,4}\b/g, (code) => internalTitleMap[code] || '')
+  const cleaned = stripInternalCodes(replaced) || stripInternalCodes(text)
+  if (cleaned) return cleaned
+  if (/^P-\d{3,4}$/i.test(text)) return 'Kiến thức đã dùng'
+  if (/^DB-\d{3,4}$/i.test(text)) return 'Cách xử lý đã dùng'
+  if (/^PF-\d{3,4}$/i.test(text)) return 'Tín hiệu tâm lý đã ghi nhận'
+  return text
+}
+
+const displayAdvisorText = (value = '') => displayInternalTitle(value)
+
+const categoryLabels = {
+  Discovery: 'Khai thác nhu cầu',
+  'Call Handling': 'Xử lý cuộc gọi',
+  Investment: 'Đầu tư',
+  Legal: 'Pháp lý',
+  'Price Objection': 'Xử lý phản đối về giá',
+  Reconnect: 'Kết nối lại khách cũ',
+  'Advisor Safety': 'An toàn tư vấn',
+}
+
+const displayCategory = (value = '') => categoryLabels[value] || value || 'Chưa phân nhóm'
 
 const CUSTOMER_STORE_KEY = 'huy-advisor-os-customers-v1'
 const INBOX_COMPLETED_KEY = 'huy-advisor-os-inbox-completed-v1'
@@ -364,11 +424,11 @@ const defaultDealSignals = {
 }
 
 const salesDNAOptions = [
-  { key: 'GoldenSentence', label: 'Golden Sentence hiệu quả' },
-  { key: 'DiscoveryQuestion', label: 'Discovery Question hiệu quả' },
-  { key: 'CoachReminder', label: 'Coach Reminder hữu ích' },
+  { key: 'GoldenSentence', label: 'Câu nên nói hiệu quả' },
+  { key: 'DiscoveryQuestion', label: 'Câu hỏi hiệu quả' },
+  { key: 'CoachReminder', label: 'Điều nhắc hữu ích' },
   { key: 'ObjectionHandling', label: 'Xử lý phản đối thành công' },
-  { key: 'FollowUp', label: 'Follow-up hiệu quả' },
+  { key: 'FollowUp', label: 'Chăm lại hiệu quả' },
 ]
 
 function hasMeaningfulValue(value) {
@@ -379,11 +439,11 @@ function hasMeaningfulValue(value) {
 function buildSalesDNAFromReview(review, customer) {
   const selected = Array.isArray(review.salesDNASelected) ? review.salesDNASelected : []
   const values = {
-    GoldenSentence: customer.goldenSentence || 'Golden Sentence đã dùng trong cuộc gọi.',
-    DiscoveryQuestion: review.need || review.customerSaid || 'Discovery Question giúp làm rõ nhu cầu.',
-    CoachReminder: customer.coach?.focus || 'Coach Reminder giúp sale giữ đúng trọng tâm.',
+    GoldenSentence: customer.goldenSentence || 'Câu nên nói đã dùng trong cuộc gọi.',
+    DiscoveryQuestion: review.need || review.customerSaid || 'Câu hỏi giúp làm rõ nhu cầu.',
+    CoachReminder: customer.coach?.focus || 'Điều nhắc giúp sale giữ đúng trọng tâm.',
     ObjectionHandling: review.mainConcern || 'Phản đối đã được xử lý trong cuộc gọi.',
-    FollowUp: `${review.nextAction || customer.nextAction || 'Follow-up'} · ${review.followUpDate || 'Chưa chọn ngày'}`,
+    FollowUp: `${review.nextAction || customer.nextAction || 'Chăm lại'} · ${review.followUpDate || 'Chưa chọn ngày'}`,
   }
 
   return selected.map((type) => ({
@@ -497,18 +557,18 @@ function buildDealSignalsFromReview(review) {
 
 function calculateDealScore(customer) {
   const missing = []
-  if (!Array.isArray(customer.timeline) || customer.timeline.length === 0) missing.push('Thiếu Timeline')
-  if (!customer.dealSignals?.budgetConfirmed) missing.push('Thiếu Budget')
-  if (!customer.dealSignals?.decisionMakerConfirmed) missing.push('Thiếu Decision Maker')
-  if (!customer.dealSignals?.timelineConfirmed) missing.push('Thiếu Timeline mua')
+  if (!Array.isArray(customer.timeline) || customer.timeline.length === 0) missing.push('Thiếu nhật ký')
+  if (!customer.dealSignals?.budgetConfirmed) missing.push('Thiếu ngân sách')
+  if (!customer.dealSignals?.decisionMakerConfirmed) missing.push('Thiếu người quyết định')
+  if (!customer.dealSignals?.timelineConfirmed) missing.push('Thiếu thời điểm mua')
   if (!customer.dealSignals?.needConfirmed) missing.push('Thiếu nhu cầu xác nhận')
-  if (!customer.dealSignals?.nextActionDefined) missing.push('Thiếu Next Action rõ')
+  if (!customer.dealSignals?.nextActionDefined) missing.push('Thiếu việc tiếp theo rõ ràng')
 
   return {
     score: null,
     status: 'INSUFFICIENT_DATA',
     dataReady: missing.length === 0,
-    reason: missing.length ? missing.join(' · ') : 'Đủ dữ liệu nền tảng, Deal Score thật chưa bật',
+    reason: missing.length ? missing.join(' · ') : 'Đủ dữ liệu nền tảng, điểm cơ hội thật chưa bật',
     updatedAt: new Date().toISOString(),
   }
 }
@@ -518,9 +578,9 @@ const extraCustomers = [
   { id: 'nam', name: 'Anh Nam · Marketing', shortName: 'Anh Nam', stage: 'Lead mới', emotion: 'Tò mò', badge: 'Interested', action: 'Gọi lần đầu', trustScore: 52, phone: '0901000005', followUpDate: '2026-06-30' },
   { id: 'thao', name: 'Chị Thảo · Gia đình', shortName: 'Chị Thảo', stage: 'Đang follow-up', emotion: 'Cân nhắc', badge: 'Negotiating', action: 'Hỏi người quyết định', trustScore: 61, phone: '0901000006', followUpDate: '2026-06-28' },
   { id: 'phuc', name: 'Anh Phúc · Chủ DN', shortName: 'Anh Phúc', stage: 'Có hẹn', emotion: 'Tin tưởng', badge: 'Interested', action: 'Xác nhận lịch hẹn', trustScore: 78, phone: '0901000007', followUpDate: '2026-06-29' },
-  { id: 'mai', name: 'Chị Mai · Data cũ', shortName: 'Chị Mai', stage: 'Reconnect', emotion: 'Im lặng', badge: 'Silent', action: 'Gọi reconnect', trustScore: 39, phone: '0901000008', followUpDate: '2026-06-30' },
+  { id: 'mai', name: 'Chị Mai · Dữ liệu cũ', shortName: 'Chị Mai', stage: 'Kết nối lại', emotion: 'Im lặng', badge: 'Silent', action: 'Gọi kết nối lại', trustScore: 39, phone: '0901000008', followUpDate: '2026-06-30' },
   { id: 'khanh', name: 'Anh Khánh · Đầu tư', shortName: 'Anh Khánh', stage: 'Đàm phán', emotion: 'So sánh', badge: 'Negotiating', action: 'Hỏi tiêu chí so sánh', trustScore: 74, phone: '0901000009', followUpDate: '2026-06-27' },
-  { id: 'vy', name: 'Chị Vy · Event', shortName: 'Chị Vy', stage: 'Đã xem tài liệu', emotion: 'Cần thêm niềm tin', badge: 'Interested', action: 'Follow-up sau event', trustScore: 58, phone: '0901000010', followUpDate: '2026-06-29' },
+  { id: 'vy', name: 'Chị Vy · Event', shortName: 'Chị Vy', stage: 'Đã xem tài liệu', emotion: 'Cần thêm niềm tin', badge: 'Interested', action: 'Chăm lại sau sự kiện', trustScore: 58, phone: '0901000010', followUpDate: '2026-06-29' },
 ]
 
 function normalizeCustomer(customer, index = 0) {
@@ -734,11 +794,11 @@ function legacyStage(customer) {
   const lower = raw.toLowerCase()
   if (lower.includes('zalo')) return 'Đã kết nối Zalo'
   if (lower.includes('xem') || lower.includes('tài liệu')) return 'Đã xem tài liệu'
-  if (lower.includes('follow') || lower.includes('nuôi')) return 'Đang follow-up'
+  if (lower.includes('follow') || lower.includes('nuôi')) return 'Đang chăm lại'
   if (lower.includes('cân nhắc')) return 'Đang cân nhắc'
   if (lower.includes('hẹn') || lower.includes('tham quan')) return 'Có hẹn'
   if (lower.includes('đàm phán') || lower.includes('booking') || lower.includes('cọc')) return 'Đàm phán'
-  if (lower.includes('reconnect') || lower.includes('ngủ')) return 'Reconnect'
+  if (lower.includes('reconnect') || lower.includes('ngủ')) return 'Kết nối lại'
   return raw || 'Lead mới'
 }
 
@@ -771,7 +831,7 @@ function legacyTimeline(logs = []) {
       date: isoDate.slice(5).split('-').reverse().join('/'),
       type: textValue(log.activityType || log.channel || log.type, 'Note'),
       confirmed: textValue(log.content || log.note || log.question || log.answer, 'Log từ CRM cũ.'),
-      next: textValue(log.nextFollowUp ? `Follow-up ${dateValue(log.nextFollowUp)}` : log.result, 'Chưa rõ bước tiếp theo.'),
+      next: textValue(log.nextFollowUp ? `Chăm lại ${dateValue(log.nextFollowUp)}` : log.result, 'Chưa rõ bước tiếp theo.'),
     }
   })
 }
@@ -928,7 +988,7 @@ function reactivationUpdateForResult(result, customer) {
     },
     'Gửi Zalo': {
       stage: 'Gửi Zalo',
-      nextAction: 'Follow-up sau khi gửi Zalo.',
+      nextAction: 'Chăm lại sau khi gửi Zalo.',
       followUpDate: nextDateAfter(1),
     },
     'Không còn nhu cầu': {
@@ -1008,7 +1068,7 @@ function buildInboxItems(customers, completedIds) {
       customer,
       name: customer.shortName,
       stage: getCustomerStage(customer),
-      reason: followUpDate ? `Follow-up ${followUpDate}: ${nextAction}` : nextAction,
+      reason: followUpDate ? `Chăm lại ${followUpDate}: ${nextAction}` : nextAction,
       coach: customer.coach?.focus || 'Xác nhận nhu cầu trước khi tư vấn.',
       nextAction,
     }
@@ -1076,8 +1136,8 @@ function eventTypeLabel(type = '') {
   if (lower.includes('zalo')) return 'Zalo'
   if (lower.includes('meeting') || lower.includes('gặp') || lower.includes('hẹn')) return 'Gặp'
   if (lower.includes('tài liệu')) return 'Gửi tài liệu'
-  if (lower.includes('reactivation')) return 'Reactivate'
-  if (lower.includes('lead')) return 'Lead'
+  if (lower.includes('reactivation')) return 'Gọi lại khách cũ'
+  if (lower.includes('lead')) return 'Khách mới'
   if (lower.includes('note') || lower.includes('ghi chú')) return 'Ghi chú'
   return type || 'Tương tác'
 }
@@ -1104,8 +1164,8 @@ function formatTimelineDateTime(item = {}) {
 function normalizeTimelineEvent(item = {}) {
   const type = eventTypeLabel(item.eventType || item.type)
   const summary = item.summary || item.confirmed || 'Chưa có tóm tắt.'
-  const nextAction = item.nextAction || item.next || 'Chưa có Next Action.'
-  const followUp = item.followUp || item.followUpDate || String(nextAction).split('·')[1]?.trim() || 'Chưa có follow-up.'
+  const nextAction = item.nextAction || item.next || 'Chưa có việc tiếp theo.'
+  const followUp = item.followUp || item.followUpDate || String(nextAction).split('·')[1]?.trim() || 'Chưa có lịch chăm lại.'
   return {
     ...item,
     timestamp: timelineTimestamp(item),
@@ -1159,7 +1219,7 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     isoDate: todayIso,
     createdAt: new Date().toISOString(),
     date: '29/06',
-    type: 'Call Review',
+    type: 'Ghi nhận cuộc gọi',
     eventType: 'Gọi',
     title: `Gọi: ${review.result || 'Đã lưu kết quả cuộc gọi'}`,
     summary: confirmedSummary,
@@ -1186,21 +1246,21 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     isoDate: todayIso,
     createdAt: new Date().toISOString(),
     date: '29/06',
-    type: 'Diagnosis',
+    type: 'Đánh giá khách hàng',
     eventType: 'Ghi chú',
-    title: 'Diagnosis Updated',
+    title: 'Đã cập nhật đánh giá khách hàng',
     summary: [
-      reviewDiagnosis.customerStage && `Stage: ${reviewDiagnosis.customerStage}`,
-      reviewDiagnosis.barrier && `Barrier: ${reviewDiagnosis.barrier}`,
-      reviewDiagnosis.decisionMaker && `Decision Maker: ${reviewDiagnosis.decisionMaker}`,
-      reviewDiagnosis.interest?.length ? `Interest: ${reviewDiagnosis.interest.join(', ')}` : '',
-    ].filter(Boolean).join(' · ') || 'Đã cập nhật Diagnosis.',
-    confirmed: 'Diagnosis Updated.',
+      reviewDiagnosis.customerStage && `Mức độ quan tâm: ${reviewDiagnosis.customerStage}`,
+      reviewDiagnosis.barrier && `Rào cản: ${reviewDiagnosis.barrier}`,
+      reviewDiagnosis.decisionMaker && `Người quyết định: ${reviewDiagnosis.decisionMaker}`,
+      reviewDiagnosis.interest?.length ? `Điều quan tâm: ${reviewDiagnosis.interest.join(', ')}` : '',
+    ].filter(Boolean).join(' · ') || 'Đã cập nhật đánh giá khách hàng.',
+    confirmed: 'Đã cập nhật đánh giá khách hàng.',
     next: `${nextAction} · ${followUpDate || 'Chưa chọn ngày'}`,
     nextAction,
     followUp: followUpDate || 'Chưa chọn ngày',
-    detail: 'Diagnosis Updated.',
-    result: 'Diagnosis Updated',
+    detail: 'Đã cập nhật đánh giá khách hàng.',
+    result: 'Đã cập nhật đánh giá khách hàng',
     diagnosis: reviewDiagnosis,
   } : null
 
@@ -1323,9 +1383,9 @@ function App() {
   const dealPipelineHealth = buildDealPipelineHealth(activeCustomers)
   const todaySalesDNA = collectSalesDNA(activeCustomers, todayIso)
   const kpisFromData = [
-    { label: 'Calls', sublabel: 'Cuộc gọi đã log hôm nay', done: getTodayTimeline(activeCustomers, 'Call').length + getTodayTimeline(activeCustomers, 'Call Review').length, target: 15, tone: 'green', priority: true },
-    { label: 'Follow-up', sublabel: 'Khách cần chăm lại', done: buildFollowUpGroups(activeCustomers).reduce((sum, group) => sum + group.items.length, 0), target: 8, tone: 'green' },
-    { label: 'Meeting', sublabel: 'Cuộc hẹn đã ghi nhận', done: getTodayTimeline(activeCustomers, 'Meeting').length, target: 3, tone: 'orange' },
+    { label: 'Cuộc gọi', sublabel: 'Cuộc gọi đã ghi nhận hôm nay', done: getTodayTimeline(activeCustomers, 'Call').length + getTodayTimeline(activeCustomers, 'Call Review').length, target: 15, tone: 'green', priority: true },
+    { label: 'Chăm lại', sublabel: 'Khách cần chăm lại', done: buildFollowUpGroups(activeCustomers).reduce((sum, group) => sum + group.items.length, 0), target: 8, tone: 'green' },
+    { label: 'Cuộc hẹn', sublabel: 'Cuộc hẹn đã ghi nhận', done: getTodayTimeline(activeCustomers, 'Meeting').length, target: 3, tone: 'orange' },
     { label: 'Video', sublabel: 'Video cần gửi / nhắc xem', done: 2, target: 5, tone: 'gray' },
   ]
 
@@ -1352,7 +1412,7 @@ function App() {
 
     const runMigration = async () => {
       try {
-        setMigrationStatus('Đang backup Customer Store hiện tại...')
+        setMigrationStatus('Đang sao lưu kho khách hàng hiện tại...')
         const currentRaw = localStorage.getItem(CUSTOMER_STORE_KEY) || '[]'
         const backupKey = `${CUSTOMER_STORE_KEY}-backup-before-coastal-200-${new Date().toISOString().replace(/[:.]/g, '-')}`
         localStorage.setItem(backupKey, currentRaw)
@@ -1363,11 +1423,11 @@ function App() {
         if (!response.ok) throw new Error(`Không tải được backup CRM cũ: HTTP ${response.status}`)
         const payload = await response.json()
         const legacyCustomers = payload?.backup?.data?.customers
-        if (!Array.isArray(legacyCustomers)) throw new Error('Backup CRM cũ không có danh sách khách hợp lệ.')
+        if (!Array.isArray(legacyCustomers)) throw new Error('File sao lưu CRM cũ không có danh sách khách hợp lệ.')
 
         const migratedCustomers = legacyCustomers.map(mapLegacyCoastalCustomer)
         if (migratedCustomers.length !== 200) {
-          throw new Error(`Số khách migration không đúng: ${migratedCustomers.length}/200`)
+          throw new Error(`Số khách chuyển từ dữ liệu cũ không đúng: ${migratedCustomers.length}/200`)
         }
 
         saveCustomers(migratedCustomers)
@@ -1378,8 +1438,8 @@ function App() {
         setDirectCallCustomerId(null)
         setInboxCall(null)
         setActiveView('today')
-        setBackupNotice(`Migration đã import ${migratedCustomers.length} khách. Backup cũ: ${backupKey}`)
-        setMigrationStatus(`MIGRATION IMPORTED ${migratedCustomers.length} CUSTOMERS · Backup: ${backupKey}`)
+        setBackupNotice(`Đã chuyển ${migratedCustomers.length} khách từ dữ liệu cũ. File sao lưu cũ: ${backupKey}`)
+        setMigrationStatus(`Đã chuyển ${migratedCustomers.length} khách từ dữ liệu cũ · File sao lưu: ${backupKey}`)
       } catch (error) {
         const backupKey = localStorage.getItem(MIGRATION_BACKUP_KEY)
         if (backupKey) {
@@ -1390,7 +1450,7 @@ function App() {
             if (Array.isArray(restored)) setCustomers(restored.map(normalizeCustomer))
           }
         }
-        setMigrationStatus(`MIGRATION FAIL · Đã restore backup cũ nếu có. ${error.message}`)
+        setMigrationStatus(`Chuyển dữ liệu lỗi · Đã khôi phục file sao lưu cũ nếu có. ${error.message}`)
       } finally {
         window.history.replaceState({}, '', window.location.pathname)
       }
@@ -1462,7 +1522,7 @@ function App() {
           ...item,
           archived: true,
           archivedAt: new Date().toISOString(),
-          archivedReason: 'User archived from Customer360',
+          archivedReason: 'Người dùng lưu trữ từ hồ sơ khách hàng',
           updatedDate: new Date().toISOString(),
         }, index)
       })
@@ -1492,7 +1552,7 @@ function App() {
       isoDate: todayIso,
       date: '29/06',
       type: 'Reactivation',
-      confirmed: `Kết quả chiến dịch Reactivate: ${result}.`,
+      confirmed: `Kết quả chiến dịch gọi lại khách cũ: ${result}.`,
       next: `${update.nextAction} · ${update.followUpDate || 'Chưa chọn ngày'}`,
       result,
     }
@@ -1557,7 +1617,7 @@ function App() {
 
   const handleExportBackup = () => {
     exportLocalBackup(customers, completedInboxItems)
-    setBackupNotice(`Đã export backup ${customers.length} khách.`)
+      setBackupNotice(`Đã xuất file sao lưu ${customers.length} khách.`)
   }
 
   const handleImportBackup = async (file) => {
@@ -1571,9 +1631,9 @@ function App() {
         return
       }
 
-      const confirmed = window.confirm(`File có ${importedCustomers.length} khách. CRM sẽ tự tải backup hiện tại trước, sau đó thay danh sách khách bằng file này. Tiếp tục?`)
+      const confirmed = window.confirm(`File có ${importedCustomers.length} khách. Hệ thống sẽ tự tải file sao lưu hiện tại trước, sau đó thay danh sách khách bằng file này. Tiếp tục?`)
       if (!confirmed) {
-        setBackupNotice('Đã hủy import. Dữ liệu hiện tại giữ nguyên.')
+        setBackupNotice('Đã hủy nhập file. Dữ liệu hiện tại giữ nguyên.')
         return
       }
 
@@ -1589,22 +1649,22 @@ function App() {
       setDirectCallCustomerId(null)
       setInboxCall(null)
       setActiveView('dailyFlow')
-      setBackupNotice(`Import thành công ${importedCustomers.length} khách.`)
+      setBackupNotice(`Nhập file thành công ${importedCustomers.length} khách.`)
     } catch {
       setBackupNotice('Không đọc được file JSON. Vui lòng kiểm tra lại định dạng.')
     }
   }
 
   const handleResetDemoData = () => {
-    const confirmed = window.confirm('Thao tác này sẽ xóa toàn bộ dữ liệu DEMO khỏi Customer Store.\n\nKhông dùng cho dữ liệu khách thật.\n\nBạn chắc chắn muốn tiếp tục?')
+    const confirmed = window.confirm('Thao tác này sẽ xóa toàn bộ dữ liệu demo khỏi kho khách hàng.\n\nKhông dùng cho dữ liệu khách thật.\n\nBạn chắc chắn muốn tiếp tục?')
     if (!confirmed) {
-      setBackupNotice('Đã hủy Reset Demo Data. Customer Store giữ nguyên.')
+      setBackupNotice('Đã hủy xóa dữ liệu demo. Kho khách hàng giữ nguyên.')
       return
     }
 
     const phrase = window.prompt('Nhập chính xác RESET DEMO để xác nhận xóa dữ liệu demo.')
     if (phrase !== 'RESET DEMO') {
-      setBackupNotice('Reset Demo Data không thực hiện vì mã xác nhận không đúng.')
+      setBackupNotice('Không xóa dữ liệu demo vì mã xác nhận không đúng.')
       return
     }
 
@@ -1616,7 +1676,7 @@ function App() {
     setDirectCallCustomerId(null)
     setInboxCall(null)
     setActiveView('dailyFlow')
-    setBackupNotice(`Đã xóa ${customers.length - nextCustomers.length} khách demo. Customer Store còn ${nextCustomers.length} khách.`)
+    setBackupNotice(`Đã xóa ${customers.length - nextCustomers.length} khách demo. Kho khách hàng còn ${nextCustomers.length} khách.`)
   }
 
   const updateCandidateStatus = (candidateId, status) => {
@@ -1707,7 +1767,7 @@ function App() {
     <main className="advisor-shell">
       <header className="workspace-header">
         <section>
-          <p>HUY ADVISOR OS · CUSTOMER WORKSPACE</p>
+          <p>HUY ADVISOR OS · KHÔNG GIAN LÀM VIỆC KHÁCH HÀNG</p>
           <h1>Xin chào Huy</h1>
           <span>{today}</span>
         </section>
@@ -1717,8 +1777,8 @@ function App() {
         </aside>
       </header>
       <button className="add-customer-button" onClick={() => setActiveView('customerForm')}>+ Thêm khách</button>
-      <button className="add-customer-button knowledge-open-button" onClick={() => setActiveView('knowledgeSearch')}>🔎 Tra cứu Knowledge</button>
-      <button className="add-customer-button knowledge-open-button" onClick={() => setActiveView('inbox')}>📥 Advisor Inbox</button>
+      <button className="add-customer-button knowledge-open-button" onClick={() => setActiveView('knowledgeSearch')}>🔎 Tra cứu kiến thức</button>
+      <button className="add-customer-button knowledge-open-button" onClick={() => setActiveView('inbox')}>📥 Việc cần làm</button>
       {migrationStatus && <div className="migration-status">{migrationStatus}</div>}
       <BackupControls
         customerCount={activeCustomers.length}
@@ -1748,9 +1808,9 @@ function App() {
           <div className="kpi-list">
             {kpisFromData.map((item) => (
               <div
-                className={`kpi-row ${item.priority ? 'kpi-row-featured' : ''} ${item.label === 'Follow-up' ? 'kpi-row-actionable' : ''}`}
+                className={`kpi-row ${item.priority ? 'kpi-row-featured' : ''} ${item.label === 'Chăm lại' ? 'kpi-row-actionable' : ''}`}
                 key={item.label}
-                onClick={() => item.label === 'Follow-up' && setActiveView('followup')}
+                onClick={() => item.label === 'Chăm lại' && setActiveView('followup')}
               >
                 <div>
                   <strong>{item.label}</strong>
@@ -1764,7 +1824,7 @@ function App() {
 
         <article className="card coach-card">
           <div className="card-head">
-            <h2>🧠 Advisor Coach</h2>
+            <h2>🧠 Gợi ý cho Huy</h2>
           </div>
           <div className="coach-focus">
             <small>Trọng tâm hôm nay</small>
@@ -1772,12 +1832,12 @@ function App() {
           </div>
           <dl>
             <div>
-              <dt>Knowledge cần nhớ</dt>
+              <dt>Kiến thức cần nhớ</dt>
               <dd>Khách cao cấp cần đúng thông tin, không cần nhiều thông tin.</dd>
             </div>
             <div>
-              <dt>Decision cần dùng</dt>
-              <dd>PRICE-002 · Khách thấy giá cao → hỏi chuẩn so sánh.</dd>
+              <dt>Cách xử lý nên dùng</dt>
+              <dd>Khách thấy giá cao → hỏi khách đang so với điều gì.</dd>
             </div>
             <div>
               <dt>Lỗi dễ mắc</dt>
@@ -1797,7 +1857,7 @@ function App() {
                 <b>{index + 1}</b>
                 <div>
                   <strong>{customer.name}</strong>
-                  <em className={`customer-badge badge-${customer.badge.toLowerCase()}`}>{customer.badge}</em>
+                <em className={`customer-badge badge-${customer.badge.toLowerCase()}`}>{displayBadge(customer.badge)}</em>
                   <span>{getCustomerStage(customer)} · {customer.emotion}</span>
                   <small>{getCustomerNextAction(customer)}</small>
                 </div>
@@ -1830,20 +1890,20 @@ function App() {
 
         <article className="card deal-health-card">
           <div className="card-head">
-            <h2>📊 Deal Pipeline Health</h2>
+            <h2>📊 Sức khỏe cơ hội bán hàng</h2>
           </div>
           <div className="deal-health-grid">
             <section><span>Khách đủ dữ liệu</span><strong>{dealPipelineHealth.ready}</strong></section>
-            <section><span>Thiếu Timeline</span><strong>{dealPipelineHealth.missingTimeline}</strong></section>
-            <section><span>Thiếu Budget</span><strong>{dealPipelineHealth.missingBudget}</strong></section>
-            <section><span>Thiếu Decision Maker</span><strong>{dealPipelineHealth.missingDecisionMaker}</strong></section>
-            <section><span>Có Meeting</span><strong>{dealPipelineHealth.meeting}</strong></section>
+            <section><span>Thiếu nhật ký</span><strong>{dealPipelineHealth.missingTimeline}</strong></section>
+            <section><span>Thiếu ngân sách</span><strong>{dealPipelineHealth.missingBudget}</strong></section>
+            <section><span>Thiếu người quyết định</span><strong>{dealPipelineHealth.missingDecisionMaker}</strong></section>
+            <section><span>Có cuộc hẹn</span><strong>{dealPipelineHealth.meeting}</strong></section>
           </div>
         </article>
 
         <article className="card sales-dna-widget">
           <div className="card-head">
-            <h2>🧬 Sales DNA Collected</h2>
+            <h2>🧬 Kinh nghiệm bán hàng đã ghi nhận</h2>
           </div>
           <div className="sales-dna-count">
             <span>Hôm nay</span>
@@ -1857,7 +1917,7 @@ function App() {
   )
 }
 
-const stageOptions = ['Lead mới', 'Đã kết nối Zalo', 'Đã xem tài liệu', 'Đang follow-up', 'Đang cân nhắc', 'Có hẹn', 'Đàm phán', 'Reconnect']
+const stageOptions = ['Lead mới', 'Đã kết nối Zalo', 'Đã xem tài liệu', 'Đang chăm lại', 'Đang cân nhắc', 'Có hẹn', 'Đàm phán', 'Kết nối lại']
 const emotionOptions = ['Chưa rõ', 'Tò mò', 'Quan tâm', 'Cần niềm tin', 'Lo rủi ro', 'Cân nhắc', 'So sánh', 'Im lặng', 'Tin tưởng']
 const diagnosisCustomerStages = ['Tò mò', 'Quan tâm', 'So sánh', 'Chờ', 'Không phù hợp']
 const diagnosisBarriers = ['Giá', 'Tài chính', 'Pháp lý', 'Gia đình', 'Niềm tin', 'Chưa đủ thông tin', 'Chưa thấy nhu cầu']
@@ -1911,20 +1971,20 @@ function CustomerForm({ onBack, onSave }) {
       <form className="card customer-form-card" onSubmit={handleSubmit}>
         <div className="card-head">
           <h2>+ Thêm khách</h2>
-          <p>Lưu vào Customer Store</p>
+          <p>Lưu vào kho khách hàng</p>
         </div>
         <div className="customer-form-grid">
           <label><span>Họ tên</span><input value={form.name} onChange={(event) => update('name', event.target.value)} /></label>
           <label><span>Điện thoại</span><input value={form.phone} onChange={(event) => update('phone', event.target.value)} /></label>
           <label><span>Zalo</span><input value={form.zalo} onChange={(event) => update('zalo', event.target.value)} /></label>
           <label><span>Email</span><input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} /></label>
-          <label><span>Journey Stage</span><select value={form.stage} onChange={(event) => update('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-          <label><span>Emotion</span><select value={form.emotion} onChange={(event) => update('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-          <label><span>Trust Score</span><input type="number" min="0" max="100" value={form.trustScore} onChange={(event) => update('trustScore', Number(event.target.value))} /></label>
-          <label><span>Follow-up Date</span><input type="date" value={form.followUpDate} onChange={(event) => update('followUpDate', event.target.value)} /></label>
+          <label><span>Giai đoạn khách hàng</span><select value={form.stage} onChange={(event) => update('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+          <label><span>Cảm xúc hiện tại</span><select value={form.emotion} onChange={(event) => update('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+          <label><span>Mức độ tin tưởng</span><input type="number" min="0" max="100" value={form.trustScore} onChange={(event) => update('trustScore', Number(event.target.value))} /></label>
+          <label><span>Ngày chăm lại</span><input type="date" value={form.followUpDate} onChange={(event) => update('followUpDate', event.target.value)} /></label>
           <label className="form-wide"><span>Nhu cầu đã xác nhận</span><textarea value={form.confirmedNeeds} onChange={(event) => update('confirmedNeeds', event.target.value)} /></label>
           <label className="form-wide"><span>Giả thuyết chưa xác nhận</span><textarea value={form.workingHypotheses} onChange={(event) => update('workingHypotheses', event.target.value)} /></label>
-          <label className="form-wide"><span>Next Action</span><textarea value={form.nextAction} onChange={(event) => update('nextAction', event.target.value)} /></label>
+          <label className="form-wide"><span>Việc tiếp theo</span><textarea value={form.nextAction} onChange={(event) => update('nextAction', event.target.value)} /></label>
         </div>
         <button className="flow-start-button" type="submit">✅ Lưu khách</button>
       </form>
@@ -1964,15 +2024,15 @@ function KnowledgeSearch({ onBack }) {
     <main className="advisor-shell knowledge-search-screen">
       <button className="back-button" onClick={onBack}>← Quay lại</button>
       <header className="knowledge-header">
-        <p>HUY KNOWLEDGE CORE · SEARCH</p>
-        <h1>Tra cứu Knowledge</h1>
-        <span>Gõ ID, từ khóa, category hoặc Golden Sentence.</span>
+        <p>KHO KIẾN THỨC HUY · TRA CỨU</p>
+        <h1>Tra cứu kiến thức</h1>
+        <span>Gõ tình huống, từ khóa hoặc câu nói cần dùng.</span>
       </header>
 
       <section className="knowledge-search-card">
         <input
           autoFocus
-          placeholder="Tìm Knowledge hoặc Decision…"
+          placeholder="Tìm kiến thức hoặc cách xử lý…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -1983,14 +2043,14 @@ function KnowledgeSearch({ onBack }) {
         {results.map((item) => (
           <article className="card knowledge-result-card" key={item.id}>
             <div className="knowledge-result-top">
-              <strong>{item.id}</strong>
-              <span>{item.category}</span>
+              <strong>{item.title}</strong>
+              <span>{displayCategory(item.category)}</span>
             </div>
             <h2>{item.title}</h2>
             <p>{item.summary}</p>
             <blockquote>{item.goldenSentence}</blockquote>
             <div className="knowledge-result-footer">
-              <em>Decision: {item.relatedDecision}</em>
+              <em>Cách xử lý: {displayInternalTitle(item.relatedDecision)}</em>
               <button onClick={() => setSelectedKnowledge(item)}>📖 Xem chi tiết</button>
             </div>
           </article>
@@ -2006,29 +2066,29 @@ function KnowledgeDetail({ item, onBack }) {
       <button className="back-button" onClick={onBack}>← Quay lại kết quả</button>
       <article className="card knowledge-detail-card">
         <div className="knowledge-detail-title">
-          <span>{item.id} · {item.category}</span>
+          <span>{displayCategory(item.category)}</span>
           <h1>{item.title}</h1>
         </div>
 
         <section className="knowledge-detail-highlight">
-          <small>Summary</small>
+          <small>Tóm tắt</small>
           <strong>{item.summary}</strong>
         </section>
 
         <section className="knowledge-detail-highlight golden">
-          <small>Golden Sentence</small>
+          <small>Câu nên nói</small>
           <strong>{item.goldenSentence}</strong>
         </section>
 
         <div className="knowledge-detail-grid">
-          <KnowledgeList title="Checklist" items={item.checklist} />
-          <KnowledgeList title="Discovery Questions" items={item.discoveryQuestions} />
-          <KnowledgeList title="Counter Examples" items={item.counterExamples} />
+          <KnowledgeList title="Việc cần kiểm tra" items={item.checklist} />
+          <KnowledgeList title="Câu hỏi nên hỏi" items={item.discoveryQuestions} />
+          <KnowledgeList title="Ví dụ không nên làm" items={item.counterExamples} />
           <section className="knowledge-mini-card">
-            <span>Related Decision</span>
-            <strong>{item.relatedDecision}</strong>
-            <span>Related Knowledge</span>
-            <strong>{item.relatedKnowledge.join(' · ')}</strong>
+            <span>Cách xử lý liên quan</span>
+            <strong>{displayInternalTitle(item.relatedDecision)}</strong>
+            <span>Kiến thức liên quan</span>
+            <strong>{item.relatedKnowledge.map(displayInternalTitle).join(' · ')}</strong>
           </section>
         </div>
       </article>
@@ -2054,37 +2114,37 @@ function KnowledgeCandidateCenter({ candidates = [], onStatusChange }) {
     <section className="knowledge-candidate-center">
       <div className="card-head">
         <div>
-          <p>DEVELOPER MODE · SETTINGS</p>
-          <h2>🧪 Knowledge Candidate Center</h2>
+          <p>CHẾ ĐỘ KỸ THUẬT · CÀI ĐẶT</p>
+          <h2>🧪 Kho gợi ý tri thức cần duyệt</h2>
         </div>
-        <span>{visibleCandidates.length} candidates</span>
+        <span>{visibleCandidates.length} gợi ý</span>
       </div>
       {visibleCandidates.length === 0 ? (
-        <div className="candidate-empty">Chưa có Knowledge Candidate. Sau Call Review có pattern, CRM sẽ đề xuất Candidate ở đây.</div>
+        <div className="candidate-empty">Chưa có gợi ý tri thức. Sau khi ghi nhận cuộc gọi có mẫu lặp lại, hệ thống sẽ đề xuất ở đây.</div>
       ) : (
         <div className="candidate-list">
           {visibleCandidates.map((candidate) => (
             <article className="candidate-item" key={candidate.candidateId}>
               <div className="candidate-main">
-                <small>Candidate</small>
+                <small>Gợi ý</small>
                 <strong>{candidate.title}</strong>
                 <p>{candidate.observation}</p>
               </div>
               <div className="candidate-evidence">
-                <small>Evidence</small>
+                <small>Bằng chứng</small>
                 <ul>
                   {(candidate.evidence || []).slice(0, 4).map((item, index) => <li key={`${candidate.candidateId}-${index}`}>{item}</li>)}
                 </ul>
               </div>
               <div className="candidate-meta-grid">
-                <InfoRow label="Repeat Count" value={candidate.repeatCount} />
-                <InfoRow label="Customers" value={(candidate.customerIds || []).join(' · ') || '—'} />
-                <InfoRow label="Workspace" value={candidate.workspace || '—'} />
-                <InfoRow label="Status" value={candidate.status} highlight />
+                <InfoRow label="Số lần lặp lại" value={candidate.repeatCount} />
+                <InfoRow label="Khách liên quan" value={(candidate.customerIds || []).join(' · ') || '—'} />
+                <InfoRow label="Bối cảnh làm việc" value={candidate.workspace || '—'} />
+                <InfoRow label="Trạng thái" value={candidate.status} highlight />
               </div>
               <div className="candidate-actions">
-                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'CONFIRMED')}>Approve</button>
-                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'REJECTED')}>Reject</button>
+                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'CONFIRMED')}>Duyệt</button>
+                <button type="button" onClick={() => onStatusChange(candidate.candidateId, 'REJECTED')}>Từ chối</button>
               </div>
             </article>
           ))}
@@ -2100,12 +2160,12 @@ function BackupControls({ customerCount, notice, onExport, onImport }) {
   return (
     <section className="backup-controls">
       <div>
-        <strong>Backup dữ liệu</strong>
-        <span>{customerCount} khách trong LocalStorage</span>
+        <strong>Sao lưu dữ liệu</strong>
+        <span>{customerCount} khách đang lưu trên máy này</span>
         {notice && <em>{notice}</em>}
       </div>
-      <button type="button" onClick={onExport}>📦 Backup CRM</button>
-      <button type="button" onClick={() => fileInputRef.current?.click()}>⬆ Import JSON</button>
+      <button type="button" onClick={onExport}>📦 Sao lưu dữ liệu</button>
+      <button type="button" onClick={() => fileInputRef.current?.click()}>⬆ Nhập file JSON</button>
       <input
         ref={fileInputRef}
         type="file"
@@ -2121,26 +2181,26 @@ function BackupControls({ customerCount, notice, onExport, onImport }) {
 
 function ResetDemoDataTool({ activeCount, demoCount, onReset }) {
   return (
-    <section className="dev-reset-demo-tool" aria-label="Reset Demo Data">
+    <section className="dev-reset-demo-tool" aria-label="Xóa dữ liệu demo">
       <div>
-        <strong>⚠️ Reset Demo Data</strong>
-        <span>Developer Mode · {demoCount} demo / {activeCount} khách đang hiển thị</span>
-        <em>Chỉ dùng trước Go-Live để đưa CRM về trạng thái READY FOR IMPORT.</em>
+        <strong>⚠️ Xóa dữ liệu demo</strong>
+        <span>Chế độ kỹ thuật · {demoCount} khách mẫu / {activeCount} khách đang hiển thị</span>
+        <em>Chỉ dùng trước ngày vận hành thật để đưa hệ thống về trạng thái sẵn sàng nhập khách.</em>
       </div>
-      <button type="button" onClick={onReset}>⚠️ Reset Demo Data</button>
+      <button type="button" onClick={onReset}>⚠️ Xóa dữ liệu demo</button>
     </section>
   )
 }
 
 function DailyMissionProgress({ progress }) {
   return (
-    <section className="daily-mission-progress" aria-label="Daily Mission Progress">
+    <section className="daily-mission-progress" aria-label="Tiến độ công việc hôm nay">
       <div>
         <span>Đã gọi</span>
         <strong>{progress.calls}/{progress.callTarget}</strong>
       </div>
       <div>
-        <span>Follow-up</span>
+        <span>Chăm lại</span>
         <strong>{progress.followUps}/{progress.followUpTarget}</strong>
       </div>
       <div>
@@ -2179,15 +2239,15 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
       <header className="brief-header">
         <button className="back-button" onClick={onBack}>← Quay lại</button>
         <div>
-          <p>SMART CALL BRIEF · {stepLabel}</p>
+          <p>TÓM TẮT TRƯỚC KHI GỌI · {stepLabel}</p>
           <h1>{customer.shortName}</h1>
-          <span>{customerStage} · {customer.emotion} · Trust {trustScore}/100</span>
+          <span>{customerStage} · {customer.emotion} · Tin tưởng {trustScore}/100</span>
         </div>
       </header>
 
       <section className="brief-grid">
         <article className="card brief-customer-card">
-          <span>Customer</span>
+          <span>Khách hàng</span>
           <strong>{customer.name}</strong>
           <p>Lần tương tác gần nhất: {latestInteraction(customer)}</p>
         </article>
@@ -2198,7 +2258,7 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
         </article>
 
         <article className="card brief-questions-card">
-          <span>3 Discovery Questions</span>
+          <span>3 câu hỏi nên hỏi</span>
           <div>
             {questions.map((question, index) => (
               <label className={checkedQuestions[index] ? 'is-checked' : ''} key={question}>
@@ -2215,20 +2275,20 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
         </article>
 
         <article className="card brief-golden-card">
-          <span>Golden Sentence</span>
+          <span>Câu nên nói</span>
           <strong>{customer.goldenSentence}</strong>
         </article>
 
         <article className="card brief-mini-card">
-          <span>Knowledge cần nhớ</span>
-          <strong>{knowledgeCodes.join(' · ')}</strong>
-          <button onClick={() => setQuickView(`Knowledge: ${customer.coach?.knowledge || knowledgeCodes.join(' · ')}`)}>📖 Xem nhanh</button>
+          <span>Kiến thức cần nhớ</span>
+          <strong>{knowledgeCodes.map(displayInternalTitle).join(' · ')}</strong>
+          <button onClick={() => setQuickView(`Kiến thức: ${displayAdvisorText(customer.coach?.knowledge || knowledgeCodes.join(' · '))}`)}>📖 Xem nhanh</button>
         </article>
 
         <article className="card brief-mini-card">
-          <span>Decision cần dùng</span>
-          <strong>{decisionCodes.join(' · ')}</strong>
-          <button onClick={() => setQuickView(`Decision: ${customer.coach?.decision || decisionCodes.join(' · ')}`)}>📘 Xem nhanh</button>
+          <span>Cách xử lý nên dùng</span>
+          <strong>{decisionCodes.map(displayInternalTitle).join(' · ')}</strong>
+          <button onClick={() => setQuickView(`Cách xử lý: ${displayAdvisorText(customer.coach?.decision || decisionCodes.join(' · '))}`)}>📘 Xem nhanh</button>
         </article>
 
         <article className="card brief-warning-card">
@@ -2268,8 +2328,8 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
 
   const currentCustomer = flowCustomers[currentIndex]
   const reviewedCustomer = customers.find((customer) => customer.id === reviewedCustomerId)
-  const mostUsedKnowledge = dailyStats.knowledge[0] || 'P-0003'
-  const mostUsedDecision = dailyStats.decisions[0] || 'DB-001'
+  const mostUsedKnowledge = displayInternalTitle(dailyStats.knowledge[0] || 'P-0003')
+  const mostUsedDecision = displayInternalTitle(dailyStats.decisions[0] || 'DB-001')
   const progress = {
     calls: dailyStats.calls,
     callTarget: 10,
@@ -2364,13 +2424,13 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
         <section className="mission-complete-overlay" role="dialog" aria-modal="true">
           <article className="mission-complete-popup">
             <h2>Hôm nay hoàn thành.</h2>
-            <p>Daily Mission đã đi hết danh sách khách hôm nay.</p>
+            <p>Đã đi hết danh sách khách cần xử lý hôm nay.</p>
             <div>
               <button onClick={() => {
                 setShowCompletionPopup(false)
                 setStep('dailyReview')
               }}>
-                Xem Daily Review
+                Xem tổng kết ngày
               </button>
               <button className="soft-button" onClick={() => setShowCompletionPopup(false)}>Đóng</button>
             </div>
@@ -2379,30 +2439,30 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
       )}
       {step === 'morning' && (
         <section className="flow-hero">
-          <p>HUY ADVISOR OS · TODAY FLOW · 08:00</p>
+          <p>HUY ADVISOR OS · LUỒNG LÀM VIỆC HÔM NAY · 08:00</p>
           <h1>Chào Huy</h1>
           <div className="flow-brief-grid">
             <article>
               <span>3 việc quan trọng nhất</span>
-              <strong>Gọi khách quá hạn · Follow-up khách đã xem tài liệu · Chốt next action rõ.</strong>
+              <strong>Gọi khách quá hạn · Chăm lại khách đã xem tài liệu · Chốt rõ việc tiếp theo.</strong>
             </article>
             <article>
               <span>Lỗi dễ mắc hôm nay</span>
               <strong>Nói quá nhiều trước khi biết khách đang vướng gì.</strong>
             </article>
             <article>
-              <span>Knowledge cần nhớ</span>
-              <strong>P-0003 · P-0005 · Khách cao cấp cần đúng thông tin.</strong>
+              <span>Kiến thức cần nhớ</span>
+              <strong>Đầu tư: hỏi tiêu chí trước khi nói sản phẩm · Giá cao: hỏi chuẩn so sánh · Khách cao cấp cần đúng thông tin.</strong>
             </article>
             <article>
-              <span>Decision cần dùng</span>
-              <strong>DB-001 · DB-002 · Hỏi rõ mục tiêu trước khi tư vấn.</strong>
+              <span>Cách xử lý nên dùng</span>
+              <strong>Hỏi rõ mục tiêu trước khi tư vấn · Không tranh luận khi khách nói giá cao.</strong>
             </article>
           </div>
           <button className="flow-secondary-button" onClick={onAddCustomer}>+ Thêm khách</button>
-          <button className="flow-secondary-button" onClick={onKnowledgeSearch}>🔎 Tra cứu Knowledge</button>
-          <button className="flow-secondary-button" onClick={onInbox}>📥 Advisor Inbox</button>
-          <button className="flow-secondary-button" onClick={onFollowUp}>🔥 Reactivate</button>
+          <button className="flow-secondary-button" onClick={onKnowledgeSearch}>🔎 Tra cứu kiến thức</button>
+          <button className="flow-secondary-button" onClick={onInbox}>📥 Việc cần làm</button>
+          <button className="flow-secondary-button" onClick={onFollowUp}>🔥 Gọi lại khách cũ</button>
           {migrationStatus && <div className="migration-status">{migrationStatus}</div>}
           <BackupControls
             customerCount={customers.length}
@@ -2418,7 +2478,7 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
             />
           )}
           <article className="flow-sales-dna-widget">
-            <span>🧬 Sales DNA Collected</span>
+            <span>🧬 Kinh nghiệm bán hàng đã ghi nhận</span>
             <strong>Hôm nay: {dailyStats.salesDNA.length} kinh nghiệm mới</strong>
           </article>
           <button className="flow-start-button" onClick={() => setStep('brief')}>🚀 BẮT ĐẦU</button>
@@ -2428,13 +2488,13 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
       {step === 'focus' && currentCustomer && (
         <section className="focus-customer-screen">
           <header className="focus-header">
-            <p>STEP {currentIndex + 1} / {flowCustomers.length} · FOCUS CUSTOMER</p>
+            <p>BƯỚC {currentIndex + 1} / {flowCustomers.length} · KHÁCH CẦN TẬP TRUNG</p>
             <h1>{currentCustomer.shortName}</h1>
             <span>{getCustomerStage(currentCustomer)} · {currentCustomer.emotion}</span>
           </header>
           <article className="card coach-card focus-coach-card">
             <div className="card-head">
-              <h2>🧠 Coach</h2>
+              <h2>🧠 Gợi ý cho Huy</h2>
             </div>
             <div className="coach-focus">
               <small>Việc cần làm ngay</small>
@@ -2442,15 +2502,15 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
             </div>
             <dl>
               <div>
-                <dt>Knowledge</dt>
-                <dd>{currentCustomer.coach.knowledge}</dd>
+                <dt>Kiến thức</dt>
+                <dd>{displayAdvisorText(currentCustomer.coach.knowledge)}</dd>
               </div>
               <div>
-                <dt>Decision</dt>
-                <dd>{currentCustomer.coach.decision}</dd>
+                <dt>Cách xử lý</dt>
+                <dd>{displayAdvisorText(currentCustomer.coach.decision)}</dd>
               </div>
               <div>
-                <dt>Next Action</dt>
+                <dt>Việc tiếp theo</dt>
                 <dd>{getCustomerNextAction(currentCustomer)}</dd>
               </div>
             </dl>
@@ -2461,9 +2521,9 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
 
       {step === 'autoNext' && (
         <section className="auto-next-card">
-          <p>✅ Timeline đã cập nhật mock</p>
+          <p>✅ Nhật ký khách hàng đã cập nhật</p>
           <h1>Chuyển sang khách tiếp theo?</h1>
-          <span>{currentIndex + 1 >= flowCustomers.length ? 'Đã hết khách ưu tiên. Có thể xem Daily Review.' : `Tiếp theo: ${flowCustomers[currentIndex + 1].shortName}`}</span>
+          <span>{currentIndex + 1 >= flowCustomers.length ? 'Đã hết khách ưu tiên. Có thể xem tổng kết ngày.' : `Tiếp theo: ${flowCustomers[currentIndex + 1].shortName}`}</span>
           {breakNotice && <em>⏳ Nghỉ 5 phút xong quay lại bấm “Có”.</em>}
           <div>
             <button onClick={goNextCustomer}>Có</button>
@@ -2474,9 +2534,9 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
 
       {step === 'completed' && (
         <section className="auto-next-card">
-          <p>HUY ADVISOR OS · DAILY MISSION</p>
+          <p>HUY ADVISOR OS · VIỆC HÔM NAY</p>
           <h1>Hôm nay hoàn thành.</h1>
-          <span>Đã đi hết danh sách khách hôm nay. Có thể xem Daily Review hoặc đóng popup.</span>
+          <span>Đã đi hết danh sách khách hôm nay. Có thể xem tổng kết ngày hoặc đóng thông báo.</span>
         </section>
       )}
 
@@ -2490,33 +2550,33 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
             </div>
           ) : (
             <>
-              <p>HUY ADVISOR OS · DAILY REVIEW · 17:00</p>
-              <h1>📊 Daily Review</h1>
+              <p>HUY ADVISOR OS · TỔNG KẾT NGÀY · 17:00</p>
+              <h1>📊 Tổng kết ngày</h1>
               <section className="daily-sales-dna-card">
-                <span>🧬 Sales DNA hôm nay</span>
+                <span>🧬 Kinh nghiệm bán hàng hôm nay</span>
                 <dl>
-                  <div><dt>Golden Sentence</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).GoldenSentence}</dd></div>
-                  <div><dt>Discovery Question</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).DiscoveryQuestion}</dd></div>
-                  <div><dt>Coach Reminder</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).CoachReminder}</dd></div>
+                  <div><dt>Câu nên nói</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).GoldenSentence}</dd></div>
+                  <div><dt>Câu hỏi hiệu quả</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).DiscoveryQuestion}</dd></div>
+                  <div><dt>Điều cần nhớ</dt><dd>{summarizeSalesDNA(dailyStats.salesDNA).CoachReminder}</dd></div>
                 </dl>
               </section>
               <div className="daily-review-grid">
                 <article><span>📞 Số cuộc gọi</span><strong>{dailyStats.calls}</strong></article>
-                <article><span>💬 Follow-up</span><strong>{dailyStats.followUps}</strong></article>
+                <article><span>💬 Chăm lại</span><strong>{dailyStats.followUps}</strong></article>
                 <article><span>🤝 Cuộc hẹn</span><strong>{dailyStats.meetings}</strong></article>
-                <article><span>🕘 Timeline xác nhận</span><strong>{dailyStats.timelineConfirmed}</strong></article>
-                <article><span>💰 Budget xác nhận</span><strong>{dailyStats.budgetConfirmed}</strong></article>
-                <article><span>👥 Decision Maker xác nhận</span><strong>{dailyStats.decisionMakerConfirmed}</strong></article>
-                <article><span>📅 Meeting đã chốt</span><strong>{dailyStats.meetingBooked}</strong></article>
-                <article><span>🧠 Knowledge dùng nhiều nhất</span><strong>{mostUsedKnowledge}</strong></article>
-                <article><span>📖 Decision dùng nhiều nhất</span><strong>{mostUsedDecision}</strong></article>
+                <article><span>🕘 Thời điểm mua đã xác nhận</span><strong>{dailyStats.timelineConfirmed}</strong></article>
+                <article><span>💰 Ngân sách đã xác nhận</span><strong>{dailyStats.budgetConfirmed}</strong></article>
+                <article><span>👥 Người quyết định đã xác nhận</span><strong>{dailyStats.decisionMakerConfirmed}</strong></article>
+                <article><span>📅 Cuộc hẹn đã chốt</span><strong>{dailyStats.meetingBooked}</strong></article>
+                <article><span>🧠 Kiến thức dùng nhiều nhất</span><strong>{mostUsedKnowledge}</strong></article>
+                <article><span>📖 Cách xử lý dùng nhiều nhất</span><strong>{mostUsedDecision}</strong></article>
                 <article><span>⚠ Lỗi lặp lại</span><strong>{dailyStats.mistakes.join(' · ')}</strong></article>
-                <article><span>✅ Điều làm tốt</span><strong>Đi đúng flow, không bỏ qua Review, luôn có Next Action.</strong></article>
-                <article><span>💬 Golden Sentence</span><strong>“Em chưa vội tư vấn sản phẩm. Em muốn hiểu đúng điều anh/chị đang cần trước.”</strong></article>
+                <article><span>✅ Điều làm tốt</span><strong>Đi đúng quy trình, không bỏ qua ghi nhận, luôn có việc tiếp theo.</strong></article>
+                <article><span>💬 Câu nên nói</span><strong>“Em chưa vội tư vấn sản phẩm. Em muốn hiểu đúng điều anh/chị đang cần trước.”</strong></article>
               </div>
               <div className="tomorrow-card">
                 <span>🎯 3 việc quan trọng ngày mai</span>
-                <strong>Gọi khách chưa nghe máy · Follow-up khách đã nhận Zalo · Chốt lịch với khách có tín hiệu mua.</strong>
+                <strong>Gọi khách chưa nghe máy · Chăm lại khách đã nhận Zalo · Chốt lịch với khách có tín hiệu mua.</strong>
               </div>
               <button className="flow-start-button" onClick={() => setDayClosed(true)}>✅ KẾT THÚC NGÀY</button>
             </>
@@ -2539,8 +2599,8 @@ function FollowUpWorkspace({ customers, onBack, onCall, reactivationState, onRea
 
       <header className="followup-header">
         <section>
-          <p>HUY ADVISOR OS · FOLLOW-UP WORKSPACE</p>
-          <h1>Follow-up hôm nay</h1>
+          <p>HUY ADVISOR OS · DANH SÁCH CHĂM LẠI</p>
+          <h1>Chăm lại hôm nay</h1>
           <span>{totalItems} hành động cần xử lý · Ưu tiên từ trên xuống</span>
         </section>
         <aside>
@@ -2552,14 +2612,14 @@ function FollowUpWorkspace({ customers, onBack, onCall, reactivationState, onRea
       <section className="card reactivation-card">
         <div className="card-head">
           <div>
-            <h2>🔥 Reactivation Mode · Ngày {reactivationQueue.dayNumber}</h2>
+            <h2>🔥 Gọi lại khách cũ · Ngày {reactivationQueue.dayNumber}</h2>
             <p>{reactivationQueue.completed}/{reactivationQueue.items.length || reactivationBatchSize} khách hôm nay</p>
           </div>
           {reactivationQueue.isComplete && <strong className="reactivation-done">Hôm nay hoàn thành.</strong>}
         </div>
         <div className="reactivation-list">
           {reactivationQueue.items.length === 0 ? (
-            <div className="empty-inbox">Không còn khách quá hạn để đưa vào queue hôm nay.</div>
+            <div className="empty-inbox">Không còn khách quá hạn để đưa vào danh sách hôm nay.</div>
           ) : (
             reactivationQueue.items.map((item, index) => (
               <section className={`reactivation-item ${item.result ? 'is-done' : ''}`} key={item.customer.id}>
@@ -2568,7 +2628,7 @@ function FollowUpWorkspace({ customers, onBack, onCall, reactivationState, onRea
                   <div>
                     <strong>{item.customer.shortName}</strong>
                     <span>{item.customer.phone} · {item.stage}</span>
-                    <small>Follow-up cũ: {item.followUpDate || 'Chưa chọn ngày'} · {item.nextAction}</small>
+                    <small>Lịch chăm cũ: {item.followUpDate || 'Chưa chọn ngày'} · {item.nextAction}</small>
                   </div>
                 </div>
                 <div className="reactivation-actions">
@@ -2603,16 +2663,16 @@ function FollowUpWorkspace({ customers, onBack, onCall, reactivationState, onRea
                       <span>{item.stage}</span>
                     </div>
                     <div className="followup-detail">
-                      <small>Lý do Follow-up</small>
+                      <small>Lý do chăm lại</small>
                       <p>{item.reason}</p>
                     </div>
                     <div className="followup-detail coach-reminder">
-                      <small>Coach Reminder</small>
+                      <small>Nhắc Huy nhớ</small>
                       <p>{item.coach}</p>
                     </div>
                     <div className="followup-tags">
-                      <em>{item.knowledge}</em>
-                      <em>{item.decision}</em>
+                      <em>{displayAdvisorText(item.knowledge)}</em>
+                      <em>{displayAdvisorText(item.decision)}</em>
                     </div>
                     <div className="followup-next">
                       <span>{item.nextAction}</span>
@@ -2643,9 +2703,9 @@ function AdvisorInbox({ customers, completedIds, onBack, onCall }) {
 
       <header className="inbox-header">
         <section>
-          <p>HUY ADVISOR OS · ADVISOR INBOX</p>
-          <h1>Inbox công việc</h1>
-          <span>{customers.length} khách trong Customer Store · Làm từ trên xuống</span>
+          <p>HUY ADVISOR OS · VIỆC CẦN LÀM</p>
+          <h1>Việc cần làm</h1>
+          <span>{customers.length} khách trong kho khách hàng · Làm từ trên xuống</span>
         </section>
         <aside>
           <small>Việc đầu tiên</small>
@@ -2677,11 +2737,11 @@ function AdvisorInbox({ customers, completedIds, onBack, onCall }) {
                     <p>{item.reason}</p>
                   </div>
                   <div className="inbox-detail coach-reminder">
-                    <small>Coach Reminder</small>
+                    <small>Nhắc Huy nhớ</small>
                     <p>{item.coach}</p>
                   </div>
                   <div className="inbox-next">
-                    <small>Next Action</small>
+                    <small>Việc tiếp theo</small>
                     <span>{item.nextAction}</span>
                     {section.key === 'done' ? (
                       <em>Đã hoàn thành</em>
@@ -2752,7 +2812,7 @@ function CustomerMemoryCard({ customer, isEditing, form, onChange, onToggleEdit,
   )
 }
 
-const customer360JourneyStages = ['Lead mới', 'Đã gọi', 'Đã gửi tài liệu', 'Follow-up', 'Hẹn gặp', 'Đặt cọc']
+const customer360JourneyStages = ['Lead mới', 'Đã gọi', 'Đã gửi tài liệu', 'Chăm lại', 'Hẹn gặp', 'Đặt cọc']
 
 function getCustomer360JourneyIndex(customer, timelineEvents = []) {
   const text = [
@@ -2787,9 +2847,17 @@ function cleanCoachText(value, fallback = 'Chưa đủ dữ liệu để kết l
   return text
     .replace(/PF-\d{4}\s*·\s*/gi, '')
     .replace(/PF-\d{4}/gi, '')
+    .replace(/follow-up/gi, 'chăm lại')
+    .replace(/workspace/gi, 'bối cảnh')
     .replace(/trigger:\s*/gi, 'tín hiệu: ')
     .replace(/Diagnosis barrier:\s*/gi, 'Rào cản đang ghi nhận: ')
-    .replace(/Customer stage:\s*/gi, 'Giai đoạn khách: ')
+    .replace(/Customer stage:\s*/gi, 'Mức độ quan tâm: ')
+    .replace(/Trust Score:\s*/gi, 'Mức độ tin tưởng: ')
+    .replace(/Trust thấp/gi, 'Niềm tin còn thấp')
+    .replace(/Trust trung bình/gi, 'Niềm tin ở mức trung bình')
+    .replace(/Trust khá tốt/gi, 'Niềm tin khá tốt')
+    .replace(/Timeline mua/gi, 'Thời điểm mua')
+    .replace(/Timeline có/gi, 'Nhật ký có')
     .replace(/Journey:\s*/gi, 'Hành trình hiện tại: ')
     .replace(/\s{2,}/g, ' ')
     .trim()
@@ -2826,7 +2894,7 @@ function buildAthenaExplanation(customer, timelineEvents = [], customerMemory = 
     customerMemory.confirmed?.biggestBarrier && `Barrier lớn nhất đã ghi nhận: ${customerMemory.confirmed.biggestBarrier}.`,
     customerMemory.confirmed?.purchaseGoal && `Mục tiêu mua đã ghi nhận: ${customerMemory.confirmed.purchaseGoal}.`,
     getCustomerStage(customer) && `Hành trình hiện tại: ${getCustomerStage(customer)}.`,
-    timelineEvents.length > 0 && `Timeline có ${timelineEvents.length} tương tác để tham chiếu.`,
+    timelineEvents.length > 0 && `Nhật ký có ${timelineEvents.length} tương tác để tham chiếu.`,
     ...(psychologyProfile.behaviorSignals || []).slice(0, 2),
   ].filter(Boolean).map((item) => cleanCoachText(item))
 
@@ -2987,7 +3055,7 @@ function buildPsychologyInsight({ customer, timelineEvents, customerMemory, diag
 
 function buildTodayActionInsight(todayAction = {}, psychologyProfile = {}) {
   return buildInsightText({
-    observation: todayAction.reason || 'hồ sơ đang cần một next action rõ.',
+    observation: todayAction.reason || 'hồ sơ đang cần một việc tiếp theo rõ ràng.',
     meaning: todayAction.goal || 'cuộc liên hệ cần có mục tiêu cụ thể.',
     evidence: [todayAction.action, psychologyProfile.decisionBarrier, psychologyProfile.fear].filter(Boolean),
     uncertainty: 'khách có thể phản hồi khác dự kiến, nên đừng đi theo kịch bản cứng.',
@@ -2999,7 +3067,7 @@ function buildTodayActionInsight(todayAction = {}, psychologyProfile = {}) {
 function buildWorkspaceInsight(workspaceCoach = {}, psychologyProfile = {}) {
   return buildInsightText({
     observation: `anh đang làm việc trong ngữ cảnh ${workspaceCoach.label || 'hiện tại'}.`,
-    meaning: `cách coach cần ưu tiên ${Array.isArray(workspaceCoach.focus) ? workspaceCoach.focus.join(', ') : 'bối cảnh thực tế'} thay vì nói chung chung.`,
+    meaning: `cách tư vấn cần ưu tiên ${Array.isArray(workspaceCoach.focus) ? workspaceCoach.focus.join(', ') : 'bối cảnh thực tế'} thay vì nói chung chung.`,
     evidence: [workspaceCoach.recommendation, psychologyProfile.decisionBarrier, psychologyProfile.trustGap].filter(Boolean),
     uncertainty: 'phản ứng thật của khách trong workspace này có thể khác hồ sơ đang ghi nhận.',
     validation: workspaceCoach.focus?.[0] ? `điểm đầu tiên cần kiểm tra là: ${workspaceCoach.focus[0]}.` : 'kiểm tra khách đang cần gì ngay lúc này.',
@@ -3053,8 +3121,8 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {},
   if (due) {
     return {
       priority: 'Cao',
-      action: 'Gọi follow-up ngay hôm nay.',
-      reason: `Follow-up đã đến hạn hoặc quá hạn.${psychologyReason}`,
+      action: 'Gọi chăm lại ngay hôm nay.',
+      reason: `Lịch chăm lại đã đến hạn hoặc quá hạn.${psychologyReason}`,
       goal: 'Khơi lại cuộc trao đổi và xác nhận khách còn quan tâm không.',
       responseSteps: [
         'Nếu khách nghe máy: nhắc lại ngắn gọn lần trao đổi trước.',
@@ -3083,11 +3151,11 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {},
       priority: 'Cao',
       action: 'Gọi lần đầu để xác nhận nhu cầu.',
       reason: `Khách chưa có lịch sử tương tác rõ ràng.${psychologyReason}`,
-      goal: 'Hiểu khách quan tâm điều gì, xin kết nối Zalo và đặt follow-up.',
+      goal: 'Hiểu khách quan tâm điều gì, xin kết nối Zalo và đặt lịch chăm lại.',
       responseSteps: [
         'Nếu khách có thời gian: hỏi nhu cầu chính trước.',
         'Nếu khách bận: xin lịch gọi lại, không tư vấn dài.',
-        'Nếu khách xin Zalo: gửi ngắn và xin phép follow-up.',
+        'Nếu khách xin Zalo: gửi ngắn và xin phép chăm lại.',
       ],
     }
   }
@@ -3115,7 +3183,7 @@ function buildNextBestAction(customer, timelineEvents = [], customerMemory = {},
       responseSteps: [
         'Nếu rào cản còn đúng: hỏi điều kiện nào giúp khách yên tâm hơn.',
         'Nếu rào cản đã hết: chuyển sang đề xuất bước tiếp theo.',
-        'Nếu phát sinh rào cản mới: ghi vào Timeline và đặt follow-up.',
+        'Nếu phát sinh rào cản mới: ghi vào nhật ký và đặt lịch chăm lại.',
       ],
     }
   }
@@ -3327,7 +3395,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
         updatedAt: new Date().toISOString(),
       },
     })
-    setSaveNotice('Đã lưu Customer Memory')
+    setSaveNotice('Đã lưu điều cần nhớ')
     setIsEditingMemory(false)
   }
 
@@ -3349,12 +3417,12 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
 
       <header className="customer-detail-header">
         <section>
-          <p>HUY ADVISOR OS · CUSTOMER 360</p>
+          <p>HUY ADVISOR OS · HỒ SƠ KHÁCH HÀNG</p>
           <h1>{customer.shortName}</h1>
           <div className="customer-header-meta">
             <span className={`stage-pill badge-${customer.badge.toLowerCase()}`}>{customerStage}</span>
-            <span>Trust Score: <strong>{customerTrustScore}/100</strong></span>
-            <span>Emotion: <strong>{customer.emotion}</strong></span>
+            <span>Mức độ tin tưởng: <strong>{customerTrustScore}/100</strong></span>
+            <span>Cảm xúc: <strong>{customer.emotion}</strong></span>
           </div>
         </section>
         <aside className="customer-header-actions">
@@ -3367,18 +3435,18 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
         <section className="card customer-form-card customer-edit-card">
           <div className="card-head">
             <h2>Sửa khách</h2>
-            <p>Cập nhật thông tin cơ bản, không làm mất Timeline hay dữ liệu phân tích.</p>
+            <p>Cập nhật thông tin cơ bản, không làm mất nhật ký hay dữ liệu phân tích.</p>
           </div>
           <div className="customer-form-grid">
             <label><span>Họ tên</span><input value={snapshotForm.name} onChange={(event) => updateSnapshotField('name', event.target.value)} /></label>
             <label><span>Điện thoại</span><input value={snapshotForm.phone} onChange={(event) => updateSnapshotField('phone', event.target.value)} /></label>
             <label><span>Zalo</span><input value={snapshotForm.zalo} onChange={(event) => updateSnapshotField('zalo', event.target.value)} /></label>
             <label><span>Email</span><input type="email" value={snapshotForm.email} onChange={(event) => updateSnapshotField('email', event.target.value)} /></label>
-            <label><span>Journey Stage</span><select value={snapshotForm.stage} onChange={(event) => updateSnapshotField('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-            <label><span>Emotion</span><select value={snapshotForm.emotion} onChange={(event) => updateSnapshotField('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-            <label><span>Trust Score</span><input type="number" min="0" max="100" value={snapshotForm.trustScore} onChange={(event) => updateSnapshotField('trustScore', event.target.value)} /></label>
-            <label><span>Follow-up Date</span><input type="date" value={snapshotForm.followUpDate} onChange={(event) => updateSnapshotField('followUpDate', event.target.value)} /></label>
-            <label className="form-wide"><span>Next Action</span><textarea value={snapshotForm.nextAction} onChange={(event) => updateSnapshotField('nextAction', event.target.value)} /></label>
+            <label><span>Giai đoạn khách hàng</span><select value={snapshotForm.stage} onChange={(event) => updateSnapshotField('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+            <label><span>Cảm xúc hiện tại</span><select value={snapshotForm.emotion} onChange={(event) => updateSnapshotField('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+            <label><span>Mức độ tin tưởng</span><input type="number" min="0" max="100" value={snapshotForm.trustScore} onChange={(event) => updateSnapshotField('trustScore', event.target.value)} /></label>
+            <label><span>Ngày chăm lại</span><input type="date" value={snapshotForm.followUpDate} onChange={(event) => updateSnapshotField('followUpDate', event.target.value)} /></label>
+            <label className="form-wide"><span>Việc tiếp theo</span><textarea value={snapshotForm.nextAction} onChange={(event) => updateSnapshotField('nextAction', event.target.value)} /></label>
             <label className="form-wide"><span>Nhu cầu đã xác nhận</span><textarea value={snapshotForm.confirmedNeed} onChange={(event) => updateSnapshotField('confirmedNeed', event.target.value)} /></label>
             <label className="form-wide"><span>Giả thuyết chưa xác nhận</span><textarea value={snapshotForm.hypothesis} onChange={(event) => updateSnapshotField('hypothesis', event.target.value)} /></label>
             <label className="form-wide"><span>Người quyết định</span><textarea value={snapshotForm.decisionMaker} onChange={(event) => updateSnapshotField('decisionMaker', event.target.value)} /></label>
@@ -3395,23 +3463,23 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
       <section className="customer-detail-grid">
         <article className="card customer360-overview-card">
           <div className="card-head">
-            <h2>👤 CUSTOMER OVERVIEW</h2>
+            <h2>👤 Tổng quan khách hàng</h2>
           </div>
           <div className="customer360-overview-grid">
             <InfoRow label="Họ tên" value={customer.name || customer.shortName} />
             <InfoRow label="Nghề nghiệp" value={overviewProfession || 'Chưa rõ'} />
             <InfoRow label="Gia đình" value={overviewFamily} />
             <InfoRow label="Điều cần nhớ" value={overviewMemory || 'Chưa ghi nhận điều cần nhớ lâu dài.'} highlight />
-            <InfoRow label="Customer Stage" value={diagnosis.customerStage || 'Chưa đánh giá'} />
-            <InfoRow label="Barrier" value={diagnosis.barrier || 'Chưa đánh giá'} />
-            <InfoRow label="Decision Maker" value={customerDecisionMaker || 'Chưa rõ'} />
-            <InfoRow label="Interest" value={formatCustomer360Value(diagnosis.interest, 'Chưa đánh giá')} highlight />
+            <InfoRow label="Mức độ quan tâm" value={diagnosis.customerStage || 'Chưa đánh giá'} />
+            <InfoRow label="Rào cản" value={diagnosis.barrier || 'Chưa đánh giá'} />
+            <InfoRow label="Người quyết định" value={customerDecisionMaker || 'Chưa rõ'} />
+            <InfoRow label="Điều khách quan tâm" value={formatCustomer360Value(diagnosis.interest, 'Chưa đánh giá')} highlight />
           </div>
         </article>
 
         <section className="workspace-selector-card">
           <div>
-            <small>WORKSPACE COACH</small>
+            <small>GỢI Ý THEO BỐI CẢNH</small>
             <h2>Hôm nay anh đang ở đâu?</h2>
           </div>
           <div className="workspace-selector-options">
@@ -3520,7 +3588,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
 
         <article className="card customer360-journey-card">
           <div className="card-head">
-            <h2>📍 CUSTOMER JOURNEY</h2>
+            <h2>📍 Hành trình khách hàng</h2>
           </div>
           <div className="customer360-journey">
             {customer360JourneyStages.map((stage, index) => (
@@ -3537,20 +3605,20 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
 
         <article className="card customer360-last-card">
           <div className="card-head">
-            <h2>🕒 LAST INTERACTION</h2>
+            <h2>🕒 Lần tương tác gần nhất</h2>
           </div>
           <div className="customer360-last-grid">
             <InfoRow label="Lần cuối liên hệ" value={latestInteraction?.displayDateTime || 'Chưa có tương tác.'} />
             <InfoRow label="Đã gửi gì" value={latestInteraction?.knowledge || latestInteraction?.decision || latestInteraction?.displayType || 'Chưa ghi nhận.'} />
             <InfoRow label="Khách phản hồi gì" value={latestInteraction?.summary || 'Chưa ghi nhận phản hồi.'} />
-            <InfoRow label="Follow-up khi nào" value={latestInteraction?.followUp || customerFollowUpDate || 'Chưa chọn ngày.'} highlight />
+            <InfoRow label="Chăm lại khi nào" value={latestInteraction?.followUp || customerFollowUpDate || 'Chưa chọn ngày.'} highlight />
           </div>
         </article>
 
         <article className="card customer360-today-card">
           <div>
             <div className="customer360-today-head">
-              <span>🎯 TODAY ACTION</span>
+              <span>🎯 Việc hôm nay</span>
               <strong className={`priority-pill priority-${todayAction.priority.toLowerCase().replace(' ', '-')}`}>{todayAction.priority}</strong>
             </div>
             <h2>Hôm nay nên làm gì</h2>
@@ -3587,7 +3655,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
 
         <article className="card customer360-avoid-card">
           <div className="card-head">
-            <h2>⚠ THINGS TO AVOID</h2>
+            <h2>⚠ Điều cần tránh</h2>
           </div>
           <div className="customer360-avoid-list">
             <InfoRow label="Điều cần tránh" value={thingsToAvoid[0]} />
@@ -3598,32 +3666,32 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
 
         <article className="card knowledge-recommendation-card">
           <div className="card-head">
-            <h2>📚 Knowledge Recommendation</h2>
+            <h2>📚 Kiến thức nên dùng</h2>
           </div>
           <section className="recommendation-grid">
             <div className="recommendation-column">
-              <span>Knowledge nên dùng</span>
+              <span>Kiến thức nên dùng</span>
               {knowledgeRecommendation.knowledge.map((item) => (
                 <article className="recommendation-item" key={item.id}>
-                  <strong>{item.id} · {item.title}</strong>
+                  <strong>{item.title}</strong>
                   <p>{item.summary}</p>
                   <p>{item.coachGuidance}</p>
-                  <small>Vì sao CRM gợi ý: {item.why}</small>
+                  <small>Vì sao hệ thống gợi ý: {item.why}</small>
                 </article>
               ))}
             </div>
             <div className="recommendation-column">
-              <span>Decision Recommendation</span>
+              <span>Cách xử lý nên dùng</span>
               {knowledgeRecommendation.decisions.map((item) => (
                 <article className="recommendation-item" key={item.id}>
-                  <strong>{item.id} · {item.title}</strong>
+                  <strong>{item.title}</strong>
                   <p>{item.reason}</p>
                   <small>Lý do: {item.why}</small>
                 </article>
               ))}
             </div>
             <div className="recommendation-column recommendation-reminder-column">
-              <span>Sales Reminder</span>
+              <span>Nhắc Huy nhớ</span>
               <ul>
                 {knowledgeRecommendation.reminders.map((item) => (
                   <li key={item.id}>{item.text}</li>
@@ -3645,8 +3713,8 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
                   <em>{item.displayType}</em>
                   <strong>{item.title}</strong>
                   <p>{item.summary}</p>
-                  <small>Next Action: {item.nextAction}</small>
-                  <small>Follow-up: {item.followUp}</small>
+                  <small>Việc tiếp theo: {item.nextAction}</small>
+                  <small>Chăm lại: {item.followUp}</small>
                 </div>
               </button>
             ))}
@@ -3670,16 +3738,16 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate, onCustomerArchi
                 <dd>{selectedTimelineEvent.detail}</dd>
               </div>
               <div>
-                <dt>Next Action</dt>
+                <dt>Việc tiếp theo</dt>
                 <dd>{selectedTimelineEvent.nextAction}</dd>
               </div>
               <div>
-                <dt>Follow-up</dt>
+                <dt>Chăm lại</dt>
                 <dd>{selectedTimelineEvent.followUp}</dd>
               </div>
               <div>
-                <dt>Knowledge / Decision</dt>
-                <dd>{[selectedTimelineEvent.knowledge, selectedTimelineEvent.decision].filter(Boolean).join(' · ') || 'Chưa ghi nhận.'}</dd>
+                <dt>Kiến thức / Cách xử lý</dt>
+                <dd>{[selectedTimelineEvent.knowledge, selectedTimelineEvent.decision].filter(Boolean).map(displayInternalTitle).join(' · ') || 'Chưa ghi nhận.'}</dd>
               </div>
             </dl>
           </article>
@@ -3705,12 +3773,12 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
 
       <header className="call-header">
         <section>
-          <p>HUY ADVISOR OS · CALL MODE</p>
+          <p>HUY ADVISOR OS · CHẾ ĐỘ GỌI KHÁCH</p>
           <h1>{customer.shortName}</h1>
           <div className="customer-header-meta">
             <span>📍 {customerStage}</span>
-            <span>❤️ Trust: <strong>{trustScore}/100</strong></span>
-            <span>😊 Emotion: <strong>{customer.emotion}</strong></span>
+            <span>❤️ Tin tưởng: <strong>{trustScore}/100</strong></span>
+            <span>😊 Cảm xúc: <strong>{customer.emotion}</strong></span>
           </div>
         </section>
         <aside>
@@ -3725,7 +3793,7 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
         <section className="call-grid">
           <article className="card coach-card call-coach-card">
             <div className="card-head">
-              <h2>🧠 Advisor Coach</h2>
+              <h2>🧠 Gợi ý cho Huy</h2>
             </div>
             <dl>
               <div>
@@ -3733,23 +3801,23 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
                 <dd>{customer.coach.mistake}</dd>
               </div>
               <div>
-                <dt>Knowledge cần nhớ</dt>
-                <dd>{customer.coach.knowledge}</dd>
+                <dt>Kiến thức cần nhớ</dt>
+                <dd>{displayAdvisorText(customer.coach.knowledge)}</dd>
               </div>
               <div>
-                <dt>Decision cần dùng</dt>
-                <dd>{customer.coach.decision}</dd>
+                <dt>Cách xử lý nên dùng</dt>
+                <dd>{displayAdvisorText(customer.coach.decision)}</dd>
               </div>
             </dl>
             <div className="golden-sentence">
-              <small>Golden Sentence</small>
+              <small>Câu nên nói</small>
               <strong>{customer.goldenSentence}</strong>
             </div>
           </article>
 
           <article className="card questions-card">
             <div className="card-head">
-              <h2>❓ Discovery Questions</h2>
+              <h2>❓ Câu hỏi nên hỏi</h2>
               <p>{askedCount}/5 đã hỏi</p>
             </div>
             <div className="question-list">
@@ -3771,19 +3839,19 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
 
           <article className="card snapshot-card">
             <div className="card-head">
-              <h2>👤 Customer Snapshot</h2>
+              <h2>👤 Tóm tắt khách hàng</h2>
             </div>
             <div className="snapshot-list">
               <InfoRow label="Nhu cầu đã xác nhận" value={getCustomerConfirmedNeed(customer)} />
               <InfoRow label="Giả thuyết chưa xác nhận" value={customer.snapshot.hypothesis} />
               <InfoRow label="Người quyết định" value={getCustomerDecisionMaker(customer)} />
-              <InfoRow label="Next Action lần trước" value={getCustomerNextAction(customer)} highlight />
+              <InfoRow label="Việc tiếp theo lần trước" value={getCustomerNextAction(customer)} highlight />
             </div>
           </article>
 
           <article className="card call-controls-card">
             <div className="card-head">
-              <h2>📞 Call Controls</h2>
+              <h2>📞 Điều khiển cuộc gọi</h2>
             </div>
             <div className="call-status">
               <small>Trạng thái</small>
@@ -3794,7 +3862,7 @@ function CallMode({ customer, onBack, onSaveReview, progress, conversationAnswer
             ) : (
               <button className="call-end-button" onClick={() => setCallState('review')}>☎️ Kết thúc cuộc gọi</button>
             )}
-            <p>Review sẽ mở tự động sau khi kết thúc để log trong dưới 60 giây.</p>
+            <p>Phần ghi nhận sẽ mở tự động sau khi kết thúc để lưu trong dưới 60 giây.</p>
           </article>
         </section>
       )}
@@ -3875,7 +3943,7 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
     <section className="call-review-wrap">
       <article className="card call-review-card">
         <div className="card-head">
-          <h2>☎️ First Contact Master</h2>
+          <h2>☎️ Hướng dẫn cuộc gọi đầu tiên</h2>
           <p>Dưới 60 giây</p>
         </div>
         <div className="review-grid">
@@ -3901,7 +3969,7 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
               <textarea className="compact-textarea" value={form.decisionMaker} onChange={(event) => updateField('decisionMaker', event.target.value)} />
             </label>
             <label>
-              <span>Timeline mua</span>
+              <span>Thời điểm mua</span>
               <textarea className="compact-textarea" value={form.buyingTimeline} onChange={(event) => updateField('buyingTimeline', event.target.value)} />
             </label>
             <label>
@@ -3921,7 +3989,7 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
               <textarea className="compact-textarea" value={form.customerLikes} onChange={(event) => updateField('customerLikes', event.target.value)} />
             </label>
             <label>
-              <span>Barrier lớn nhất</span>
+              <span>Rào cản lớn nhất</span>
               <textarea className="compact-textarea" value={form.biggestBarrier} onChange={(event) => updateField('biggestBarrier', event.target.value)} />
             </label>
           </fieldset>
@@ -3933,19 +4001,19 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
             />
           </label>
           <QuickChoiceGroup
-            label="Knowledge đã dùng"
+            label="Kiến thức đã dùng"
             options={quickReviewOptions.knowledge}
             value={form.knowledge}
             onChange={(value) => updateField('knowledge', value)}
           />
           <QuickChoiceGroup
-            label="Decision đã dùng"
+            label="Cách xử lý đã dùng"
             options={quickReviewOptions.decision}
             value={form.decision}
             onChange={(value) => updateField('decision', value)}
           />
           <section className="sales-dna-review-block">
-            <span>Sales DNA</span>
+            <span>Kinh nghiệm bán hàng</span>
             <div className="sales-dna-choice-row">
               {salesDNAOptions.map((option) => (
                 <button
@@ -3976,14 +4044,14 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
             large
           />
           <QuickChoiceGroup
-            label="Next Action"
+            label="Việc tiếp theo"
             options={quickReviewOptions.nextAction}
             value={form.nextAction}
             onChange={(value) => updateField('nextAction', value)}
             large
           />
           <section className="quick-choice-block">
-            <span>Follow-up</span>
+            <span>Chăm lại</span>
             <div className="quick-choice-row">
               {quickReviewOptions.followUp.map((option) => (
                 <button
@@ -4015,29 +4083,29 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
           </section>
         </div>
         <div className="review-summary">
-          <strong>Checklist: Đã hỏi {askedCount}/5 câu Discovery.</strong>
-          <span>Knowledge: {form.knowledge} · Decision: {form.decision}</span>
+          <strong>Đã hỏi {askedCount}/5 câu nên hỏi.</strong>
+          <span>Kiến thức: {displayInternalTitle(form.knowledge)} · Cách xử lý: {displayInternalTitle(form.decision)}</span>
         </div>
         <section className="diagnosis-review-block">
           <div className="card-head">
-            <h3>🩺 Diagnosis</h3>
+            <h3>🩺 Đánh giá khách hàng</h3>
             <p>Chuẩn hóa đánh giá khách sau cuộc gọi.</p>
           </div>
           <div className="diagnosis-grid">
             <QuickChoiceGroup
-              label="Customer Stage"
+              label="Mức độ quan tâm"
               options={diagnosisCustomerStages}
               value={form.diagnosisCustomerStage}
               onChange={(value) => updateField('diagnosisCustomerStage', value)}
             />
             <QuickChoiceGroup
-              label="Barrier"
+              label="Rào cản"
               options={diagnosisBarriers}
               value={form.diagnosisBarrier}
               onChange={(value) => updateField('diagnosisBarrier', value)}
             />
             <label className="diagnosis-score-field">
-              <span>Trust Score</span>
+              <span>Mức độ tin tưởng</span>
               <input
                 type="number"
                 min="0"
@@ -4047,13 +4115,13 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
               />
             </label>
             <QuickChoiceGroup
-              label="Decision Maker"
+              label="Người quyết định"
               options={diagnosisDecisionMakers}
               value={form.diagnosisDecisionMaker}
               onChange={(value) => updateField('diagnosisDecisionMaker', value)}
             />
             <section className="quick-choice-block diagnosis-interest-block">
-              <span>Interest</span>
+              <span>Điều khách quan tâm</span>
               <div className="quick-choice-row">
                 {diagnosisInterests.map((interest) => (
                   <button
@@ -4112,7 +4180,7 @@ function CallReview({ customer, askedCount, onSave, conversationAnswers = [] }) 
 * Vợ quyết định.
 * Chỉ nghe máy sau 19h.`}</p>
           <label>
-            <span>Có điều gì về khách mà anh muốn CRM nhớ lâu dài không?</span>
+            <span>Có điều gì về khách mà anh muốn hệ thống nhớ lâu dài không?</span>
             <textarea
               value={form.longTermMemoryNote}
               onChange={(event) => updateField('longTermMemoryNote', event.target.value)}
@@ -4142,7 +4210,7 @@ function QuickChoiceGroup({ label, options, value, onChange, large = false }) {
             key={option}
             onClick={() => onChange(option)}
           >
-            {option}
+            {displayInternalTitle(option)}
           </button>
         ))}
       </div>
