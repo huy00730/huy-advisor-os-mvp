@@ -2143,6 +2143,124 @@ button {
   min-height: 430px;
 }
 
+.customer360-overview-card,
+.customer360-journey-card {
+  grid-column: 1 / -1;
+}
+
+.customer360-overview-grid,
+.customer360-last-grid,
+.customer360-avoid-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.customer360-journey {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.customer360-step {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-height: 96px;
+  padding: 14px 10px;
+  border: 1px solid #e2e5dc;
+  border-radius: 18px;
+  background: #f7f8f3;
+  color: #68766f;
+  text-align: center;
+}
+
+.customer360-step span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #e7ebe1;
+  color: #68766f;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.customer360-step strong {
+  color: inherit;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.customer360-step.is-done {
+  border-color: rgba(29, 139, 102, .22);
+  background: #edf7f0;
+  color: #1d8b66;
+}
+
+.customer360-step.is-done span {
+  background: #1d8b66;
+  color: white;
+}
+
+.customer360-step.is-current {
+  border-color: rgba(23, 63, 57, .5);
+  background: #173f39;
+  color: white;
+  box-shadow: 0 18px 38px rgba(23, 63, 57, .16);
+}
+
+.customer360-step.is-current span {
+  background: #ffdc6a;
+  color: #173f39;
+}
+
+.customer360-today-card {
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  min-height: 260px;
+  background: linear-gradient(135deg, #173f39 0%, #1d8b66 100%);
+  color: white;
+}
+
+.customer360-today-card span {
+  display: block;
+  margin-bottom: 10px;
+  color: #ffdc6a;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.customer360-today-card h2 {
+  margin: 0 0 12px;
+  color: white;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -.05em;
+}
+
+.customer360-today-card p {
+  margin: 0;
+  color: #eef7f3;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.customer360-today-card button {
+  min-height: 58px;
+  border: 0;
+  border-radius: 18px;
+  background: #ffdc6a;
+  color: #173f39;
+  font-size: 18px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
 .snapshot-list,
 .timeline-list {
   display: grid;
@@ -2178,7 +2296,7 @@ button {
 }
 
 .timeline-card {
-  grid-column: span 1;
+  grid-column: 1 / -1;
 }
 
 .timeline-item {

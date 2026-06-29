@@ -2451,6 +2451,35 @@ function CustomerMemoryCard({ customer, isEditing, form, onChange, onToggleEdit,
   )
 }
 
+const customer360JourneyStages = ['Lead mới', 'Đã gọi', 'Đã gửi tài liệu', 'Follow-up', 'Hẹn gặp', 'Đặt cọc']
+
+function getCustomer360JourneyIndex(customer, timelineEvents = []) {
+  const text = [
+    customer?.stage,
+    customer?.journeyStage,
+    customer?.nextAction,
+    customer?.action,
+    ...(timelineEvents || []).map((item) => `${item.displayType || ''} ${item.title || ''} ${item.summary || ''} ${item.nextAction || ''}`),
+  ].join(' ').toLowerCase()
+
+  let index = 0
+  if (text.includes('gọi') || text.includes('call')) index = Math.max(index, 1)
+  if (text.includes('tài liệu') || text.includes('zalo') || text.includes('đã xem')) index = Math.max(index, 2)
+  if (text.includes('follow') || text.includes('theo dõi') || text.includes('chăm sóc')) index = Math.max(index, 3)
+  if (text.includes('hẹn') || text.includes('meeting') || text.includes('tham quan')) index = Math.max(index, 4)
+  if (text.includes('đặt cọc') || text.includes('booking') || text.includes('cọc') || text.includes('chuyển đổi')) index = Math.max(index, 5)
+  return index
+}
+
+function getFirstMemoryLine(...lists) {
+  return lists.flatMap((list) => normalizeMemoryList(list)).find(Boolean) || ''
+}
+
+function formatCustomer360Value(value, fallback = 'Chưa ghi nhận.') {
+  if (Array.isArray(value)) return value.length ? value.join(' · ') : fallback
+  return hasMeaningfulValue(value) ? value : fallback
+}
+
 function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [isCallMode, setIsCallMode] = useState(false)
   const [saveNotice, setSaveNotice] = useState('')
@@ -2460,6 +2489,17 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const dealEngine = calculateDealScore(customer)
   const customerMemory = buildCustomerMemory(customer)
   const timelineEvents = sortTimelineNewestFirst(customer.timeline || [])
+  const latestInteraction = timelineEvents[0]
+  const journeyIndex = getCustomer360JourneyIndex(customer, timelineEvents)
+  const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
+  const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
+  const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
+  const todayAction = firstMeaningful(customer.nextAction, customer.action, customer.snapshot?.nextAction, customer.coach?.focus)
+  const thingsToAvoid = [
+    firstMeaningful(customer.coach?.mistake, customerMemory.cautions[0], customerMemory.confirmed.biggestBarrier, 'Đừng nói quá nhiều trước khi hiểu khách.'),
+    firstMeaningful(customerMemory.cautions[1], customerMemory.confirmed.concerns, customer.workingHypotheses, 'Không ép khách quyết định khi chưa đủ niềm tin.'),
+    firstMeaningful(customerMemory.specialNotes[0], customerMemory.family[0], customer.snapshot?.decisionMaker, 'Luôn xác nhận lại bước tiếp theo sau cuộc gọi.'),
+  ]
   const [memoryForm, setMemoryForm] = useState({
     confirmed: { ...customerMemory.confirmed },
     people: customerMemory.people,
@@ -2555,7 +2595,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
 
       <header className="customer-detail-header">
         <section>
-          <p>HUY ADVISOR OS · CUSTOMER WORKSPACE</p>
+          <p>HUY ADVISOR OS · CUSTOMER 360</p>
           <h1>{customer.shortName}</h1>
           <div className="customer-header-meta">
             <span className={`stage-pill badge-${customer.badge.toLowerCase()}`}>{customer.stage}</span>
@@ -2566,91 +2606,65 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
       </header>
 
       <section className="customer-detail-grid">
-        <CustomerMemoryCard
-          customer={customer}
-          isEditing={isEditingMemory}
-          form={memoryForm}
-          onChange={updateMemoryForm}
-          onToggleEdit={() => setIsEditingMemory((value) => !value)}
-          onSave={saveMemory}
-        />
-
-        <article className="card coach-card customer-coach-card">
+        <article className="card customer360-overview-card">
           <div className="card-head">
-            <h2>🧠 Advisor Coach</h2>
+            <h2>👤 CUSTOMER OVERVIEW</h2>
           </div>
-          <div className="coach-focus">
-            <small>Trọng tâm với khách này</small>
-            <strong>{customer.coach.focus}</strong>
-          </div>
-          <dl>
-            <div>
-              <dt>Knowledge cần nhớ</dt>
-              <dd>{customer.coach.knowledge}</dd>
-            </div>
-            <div>
-              <dt>Decision cần dùng</dt>
-              <dd>{customer.coach.decision}</dd>
-            </div>
-            <div>
-              <dt>Lỗi dễ mắc</dt>
-              <dd>{customer.coach.mistake}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="card deal-engine-card">
-          <div className="card-head">
-            <h2>🧩 Deal Engine</h2>
-            <span className={dealEngine.dataReady ? 'deal-status-ready' : 'deal-status-missing'}>
-              {dealEngine.dataReady ? '🟢 Đủ dữ liệu' : '🟡 Thiếu dữ liệu'}
-            </span>
-          </div>
-          <div className="deal-score-box">
-            <small>Deal Score</small>
-            <strong>Chưa đủ dữ liệu</strong>
-          </div>
-          <div className="deal-reason">
-            <small>Lý do</small>
-            <p>{dealEngine.reason}</p>
-          </div>
-          <div className="deal-signal-row">
-            <em>{customer.dealSignals?.needConfirmed ? '✓ Need' : '○ Need'}</em>
-            <em>{customer.dealSignals?.budgetConfirmed ? '✓ Budget' : '○ Budget'}</em>
-            <em>{customer.dealSignals?.decisionMakerConfirmed ? '✓ Decision Maker' : '○ Decision Maker'}</em>
-            <em>{customer.dealSignals?.meetingBooked ? '✓ Meeting' : '○ Meeting'}</em>
+          <div className="customer360-overview-grid">
+            <InfoRow label="Họ tên" value={customer.name || customer.shortName} />
+            <InfoRow label="Nghề nghiệp" value={overviewProfession || 'Chưa rõ'} />
+            <InfoRow label="Gia đình" value={overviewFamily} />
+            <InfoRow label="Điều cần nhớ" value={overviewMemory || 'Chưa ghi nhận điều cần nhớ lâu dài.'} highlight />
           </div>
         </article>
 
-        <article className="card snapshot-card">
+        <article className="card customer360-journey-card">
           <div className="card-head">
-            <h2>👤 Customer Snapshot</h2>
-            <button className="inline-edit-button" onClick={() => setIsEditingSnapshot((value) => !value)}>
-              {isEditingSnapshot ? 'Đóng' : 'Sửa Snapshot'}
-            </button>
+            <h2>📍 CUSTOMER JOURNEY</h2>
           </div>
-          {isEditingSnapshot ? (
-            <div className="snapshot-edit-grid">
-              <label><span>Journey Stage</span><select value={snapshotForm.stage} onChange={(event) => updateSnapshotField('stage', event.target.value)}>{stageOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-              <label><span>Emotion</span><select value={snapshotForm.emotion} onChange={(event) => updateSnapshotField('emotion', event.target.value)}>{emotionOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-              <label><span>Trust Score</span><input type="number" min="0" max="100" value={snapshotForm.trustScore} onChange={(event) => updateSnapshotField('trustScore', event.target.value)} /></label>
-              <label><span>Follow-up Date</span><input type="date" value={snapshotForm.followUpDate} onChange={(event) => updateSnapshotField('followUpDate', event.target.value)} /></label>
-              <label className="form-wide"><span>Nhu cầu đã xác nhận</span><textarea value={snapshotForm.confirmedNeed} onChange={(event) => updateSnapshotField('confirmedNeed', event.target.value)} /></label>
-              <label className="form-wide"><span>Giả thuyết chưa xác nhận</span><textarea value={snapshotForm.hypothesis} onChange={(event) => updateSnapshotField('hypothesis', event.target.value)} /></label>
-              <label><span>Người quyết định</span><input value={snapshotForm.decisionMaker} onChange={(event) => updateSnapshotField('decisionMaker', event.target.value)} /></label>
-              <label><span>Ngân sách</span><input value={snapshotForm.budget} onChange={(event) => updateSnapshotField('budget', event.target.value)} /></label>
-              <label className="form-wide"><span>Next Action</span><textarea value={snapshotForm.nextAction} onChange={(event) => updateSnapshotField('nextAction', event.target.value)} /></label>
-              <button className="save-snapshot-button" onClick={saveSnapshot}>✅ Lưu Snapshot</button>
-            </div>
-          ) : (
-            <div className="snapshot-list">
-              <InfoRow label="Nhu cầu đã xác nhận" value={customer.snapshot.confirmedNeed} />
-              <InfoRow label="Giả thuyết chưa xác nhận" value={customer.snapshot.hypothesis} />
-              <InfoRow label="Người quyết định" value={customer.snapshot.decisionMaker} />
-              <InfoRow label="Ngân sách" value={customer.snapshot.budget} />
-              <InfoRow label="Next Action" value={customer.snapshot.nextAction} highlight />
-            </div>
-          )}
+          <div className="customer360-journey">
+            {customer360JourneyStages.map((stage, index) => (
+              <div
+                className={`customer360-step ${index < journeyIndex ? 'is-done' : ''} ${index === journeyIndex ? 'is-current' : ''}`}
+                key={stage}
+              >
+                <span>{index < journeyIndex ? '✓' : index === journeyIndex ? '●' : '○'}</span>
+                <strong>{stage}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="card customer360-last-card">
+          <div className="card-head">
+            <h2>🕒 LAST INTERACTION</h2>
+          </div>
+          <div className="customer360-last-grid">
+            <InfoRow label="Lần cuối liên hệ" value={latestInteraction?.displayDateTime || 'Chưa có tương tác.'} />
+            <InfoRow label="Đã gửi gì" value={latestInteraction?.knowledge || latestInteraction?.decision || latestInteraction?.displayType || 'Chưa ghi nhận.'} />
+            <InfoRow label="Khách phản hồi gì" value={latestInteraction?.summary || 'Chưa ghi nhận phản hồi.'} />
+            <InfoRow label="Follow-up khi nào" value={latestInteraction?.followUp || customer.followUpDate || 'Chưa chọn ngày.'} highlight />
+          </div>
+        </article>
+
+        <article className="card customer360-today-card">
+          <div>
+            <span>🎯 TODAY ACTION</span>
+            <h2>Hôm nay nên làm gì</h2>
+            <p>{todayAction || 'Gọi để xác nhận nhu cầu và chốt bước tiếp theo.'}</p>
+          </div>
+          <button onClick={() => setIsCallMode(true)}>📞 Gọi ngay</button>
+        </article>
+
+        <article className="card customer360-avoid-card">
+          <div className="card-head">
+            <h2>⚠ THINGS TO AVOID</h2>
+          </div>
+          <div className="customer360-avoid-list">
+            <InfoRow label="Điều cần tránh" value={thingsToAvoid[0]} />
+            <InfoRow label="Điều khách không thích" value={thingsToAvoid[1]} />
+            <InfoRow label="Điều phải nhớ" value={thingsToAvoid[2]} highlight />
+          </div>
         </article>
 
         <article className="card timeline-card">
@@ -2670,18 +2684,6 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
                 </div>
               </button>
             ))}
-          </div>
-        </article>
-
-        <article className="card action-card">
-          <div className="card-head">
-            <h2>⚡ Hành động</h2>
-          </div>
-          <div className="action-grid">
-            <button onClick={() => setIsCallMode(true)}>📞 Gọi</button>
-            <button>💬 Zalo</button>
-            <button>📝 Ghi nhật ký</button>
-            <button>📅 Đặt Follow-up</button>
           </div>
         </article>
       </section>
