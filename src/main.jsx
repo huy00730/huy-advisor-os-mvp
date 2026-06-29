@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { recommendKnowledgeForCustomer } from './data/knowledgeRegistry.js'
 import './styles.css'
 
 const today = new Intl.DateTimeFormat('vi-VN', {
@@ -2673,6 +2674,7 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const latestInteraction = timelineEvents[0]
   const journeyIndex = getCustomer360JourneyIndex(customer, timelineEvents)
   const diagnosis = customer.diagnosis || {}
+  const knowledgeRecommendation = recommendKnowledgeForCustomer(customer)
   const overviewProfession = firstMeaningful(customer.occupation, customer.job, customer.profession, customer.sourceJob)
   const overviewFamily = formatCustomer360Value(customerMemory.family, 'Chưa rõ gia đình.')
   const overviewMemory = getFirstMemoryLine(customerMemory.specialNotes, customerMemory.cautions, customerMemory.interests, customerMemory.family)
@@ -2873,6 +2875,42 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
             <InfoRow label="Điều khách không thích" value={thingsToAvoid[1]} />
             <InfoRow label="Điều phải nhớ" value={thingsToAvoid[2]} highlight />
           </div>
+        </article>
+
+        <article className="card knowledge-recommendation-card">
+          <div className="card-head">
+            <h2>📚 Knowledge Recommendation</h2>
+          </div>
+          <section className="recommendation-grid">
+            <div className="recommendation-column">
+              <span>Knowledge nên dùng</span>
+              {knowledgeRecommendation.knowledge.map((item) => (
+                <article className="recommendation-item" key={item.id}>
+                  <strong>{item.id} · {item.title}</strong>
+                  <p>{item.summary}</p>
+                  <small>Vì sao CRM gợi ý: {item.why}</small>
+                </article>
+              ))}
+            </div>
+            <div className="recommendation-column">
+              <span>Decision Recommendation</span>
+              {knowledgeRecommendation.decisions.map((item) => (
+                <article className="recommendation-item" key={item.id}>
+                  <strong>{item.id} · {item.title}</strong>
+                  <p>{item.reason}</p>
+                  <small>Lý do: {item.why}</small>
+                </article>
+              ))}
+            </div>
+            <div className="recommendation-column recommendation-reminder-column">
+              <span>Sales Reminder</span>
+              <ul>
+                {knowledgeRecommendation.reminders.map((item) => (
+                  <li key={item.id}>{item.text}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
         </article>
 
         <article className="card timeline-card">

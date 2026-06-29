@@ -2385,6 +2385,81 @@ button {
   cursor: pointer;
 }
 
+.knowledge-recommendation-card {
+  grid-column: 1 / -1;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr .9fr;
+  gap: 14px;
+}
+
+.recommendation-column {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.recommendation-column > span {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.recommendation-item {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid #e2e5dc;
+  border-radius: 18px;
+  background: #f7f8f3;
+}
+
+.recommendation-item strong {
+  color: #173f39;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.recommendation-item p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #32463f;
+  font-weight: 800;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.recommendation-item small {
+  color: #1d8b66;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.recommendation-reminder-column {
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff8e8;
+}
+
+.recommendation-reminder-column ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.recommendation-reminder-column li {
+  color: #173f39;
+  font-weight: 900;
+  line-height: 1.38;
+}
+
 .snapshot-list,
 .timeline-list {
   display: grid;
@@ -3395,6 +3470,10 @@ button {
   }
 
   .customer-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-grid {
     grid-template-columns: 1fr;
   }
 
