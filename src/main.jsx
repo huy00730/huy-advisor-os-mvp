@@ -382,6 +382,87 @@ function buildSalesDNAFromReview(review, customer) {
   }))
 }
 
+function firstMeaningful(...values) {
+  return values.find((value) => hasMeaningfulValue(value)) || ''
+}
+
+function extractComparisonProject(review) {
+  if (hasMeaningfulValue(review.comparingProject)) return review.comparingProject
+  const source = String(review.hypothesis || review.customerSaid || '')
+  if (!source.toLowerCase().includes('so sánh')) return ''
+  return source
+}
+
+function normalizeMemoryList(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean)
+  if (!value) return []
+  return String(value).split('\n').map((item) => item.trim()).filter(Boolean)
+}
+
+function uniqueMemoryList(...lists) {
+  return Array.from(new Set(lists.flat().map((item) => String(item).trim()).filter(Boolean)))
+}
+
+function buildCustomerMemory(customer) {
+  const existing = customer.customerMemory || {}
+  const snapshot = customer.snapshot || {}
+  const confirmed = existing.confirmed || {}
+  const specialNotes = Array.isArray(existing.specialNotes) ? existing.specialNotes : []
+  const existingPeople = normalizeMemoryList(existing.people)
+  const existingFamily = normalizeMemoryList(existing.family)
+  const existingInterests = normalizeMemoryList(existing.interests)
+  const existingCautions = normalizeMemoryList(existing.cautions)
+
+  const nextConfirmed = {
+      purchaseGoal: firstMeaningful(confirmed.purchaseGoal, customer.confirmedNeeds, snapshot.confirmedNeed),
+      budget: firstMeaningful(confirmed.budget, customer.budget, snapshot.budget),
+      decisionMaker: firstMeaningful(confirmed.decisionMaker, customer.decisionMaker, snapshot.decisionMaker),
+      buyingTimeline: firstMeaningful(confirmed.buyingTimeline, customer.buyingTimeline),
+      interestedProject: firstMeaningful(confirmed.interestedProject, customer.interestedProject),
+      comparingProject: firstMeaningful(confirmed.comparingProject, customer.comparingProject),
+      likes: firstMeaningful(confirmed.likes, customer.likes),
+      concerns: firstMeaningful(confirmed.concerns, customer.mainConcern),
+      biggestBarrier: firstMeaningful(confirmed.biggestBarrier, customer.bottleneckReason, customer.mainConcern),
+      bankLoan: firstMeaningful(confirmed.bankLoan, customer.bankLoan),
+  }
+
+  return {
+    confirmed: nextConfirmed,
+    people: uniqueMemoryList(existingPeople),
+    family: uniqueMemoryList(existingFamily, hasMeaningfulValue(nextConfirmed.decisionMaker) ? [`${nextConfirmed.decisionMaker}`] : []),
+    interests: uniqueMemoryList(existingInterests, hasMeaningfulValue(nextConfirmed.likes) ? [`${nextConfirmed.likes}`] : []),
+    cautions: uniqueMemoryList(existingCautions, hasMeaningfulValue(nextConfirmed.concerns) ? [`${nextConfirmed.concerns}`] : [], hasMeaningfulValue(nextConfirmed.biggestBarrier) ? [`${nextConfirmed.biggestBarrier}`] : []),
+    specialNotes,
+    updatedAt: existing.updatedAt || customer.updatedDate || customer.createdDate || new Date().toISOString(),
+  }
+}
+
+function mergeCustomerMemoryFromReview(customer, review) {
+  const currentMemory = buildCustomerMemory(customer)
+  const confirmed = currentMemory.confirmed
+  return {
+    ...currentMemory,
+    confirmed: {
+      purchaseGoal: firstMeaningful(review.need, confirmed.purchaseGoal),
+      budget: firstMeaningful(review.budget, confirmed.budget),
+      decisionMaker: firstMeaningful(review.decisionMaker, confirmed.decisionMaker),
+      buyingTimeline: firstMeaningful(review.buyingTimeline, confirmed.buyingTimeline),
+      interestedProject: firstMeaningful(review.interestedProject, confirmed.interestedProject),
+      comparingProject: firstMeaningful(extractComparisonProject(review), confirmed.comparingProject),
+      likes: firstMeaningful(review.customerLikes, confirmed.likes),
+      concerns: firstMeaningful(review.mainConcern, confirmed.concerns),
+      biggestBarrier: firstMeaningful(review.biggestBarrier, review.mainConcern, confirmed.biggestBarrier),
+      bankLoan: firstMeaningful(review.bankLoan, confirmed.bankLoan),
+    },
+    people: uniqueMemoryList(currentMemory.people),
+    family: uniqueMemoryList(currentMemory.family, hasMeaningfulValue(review.decisionMaker) ? [review.decisionMaker] : []),
+    interests: uniqueMemoryList(currentMemory.interests, hasMeaningfulValue(review.customerLikes) ? [review.customerLikes] : []),
+    cautions: uniqueMemoryList(currentMemory.cautions, hasMeaningfulValue(review.mainConcern) ? [review.mainConcern] : [], hasMeaningfulValue(review.biggestBarrier) ? [review.biggestBarrier] : []),
+    specialNotes: uniqueMemoryList(currentMemory.specialNotes, normalizeMemoryList(review.longTermMemoryNote)),
+    updatedAt: new Date().toISOString(),
+  }
+}
+
 function buildDealSignalsFromReview(review) {
   const result = String(review.result || '')
   const nextAction = String(review.nextAction || '')
@@ -477,6 +558,7 @@ function normalizeCustomer(customer, index = 0) {
     },
     snapshot,
     timeline: Array.isArray(customer.timeline) ? customer.timeline : [],
+    customerMemory: buildCustomerMemory(customer),
     dealSignals,
     dealScore: customer.dealScore ?? dealStatus.score,
     dealScoreReason: customer.dealScoreReason || dealStatus.reason,
@@ -979,6 +1061,7 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
     }
     const nextTimeline = [timelineItem, ...(current.timeline || [])].sort((a, b) => String(b.isoDate || '').localeCompare(String(a.isoDate || '')))
     const dealStatus = calculateDealScore({ ...current, dealSignals: mergedDealSignals, timeline: nextTimeline })
+    const nextCustomerMemory = mergeCustomerMemoryFromReview(current, review)
 
     return {
       ...current,
@@ -996,6 +1079,7 @@ function saveReviewToCustomer(customer, review, updateCustomer) {
         budget: review.budget || current.snapshot.budget,
         nextAction,
       },
+      customerMemory: nextCustomerMemory,
       timeline: nextTimeline,
       dealSignals: mergedDealSignals,
       dealScore: dealStatus.score,
@@ -1485,6 +1569,14 @@ function App() {
 
 const stageOptions = ['Lead mới', 'Đã kết nối Zalo', 'Đã xem tài liệu', 'Đang follow-up', 'Đang cân nhắc', 'Có hẹn', 'Đàm phán', 'Reconnect']
 const emotionOptions = ['Chưa rõ', 'Tò mò', 'Quan tâm', 'Cần niềm tin', 'Lo rủi ro', 'Cân nhắc', 'So sánh', 'Im lặng', 'Tin tưởng']
+
+const memorySalesSections = [
+  ['people', '👤 Con người', 'Chủ quán cà phê.\\nRất thân thiện.\\nÍt nói.'],
+  ['family', '👨‍👩‍👧 Gia đình', 'Có 2 con.\\nVợ quyết định.'],
+  ['interests', '❤️ Sở thích', 'Thích nhà ven sông.\\nHay đi Đà Nẵng.'],
+  ['cautions', '⚠ Điều cần lưu ý', 'Chỉ nghe máy sau 19h.\\nKhông thích bị ép mua.'],
+  ['specialNotes', '📌 Ghi nhớ đặc biệt', 'Mỗi dòng là một ghi nhớ còn đúng sau nhiều tháng.'],
+]
 
 function CustomerForm({ onBack, onSave }) {
   const [form, setForm] = useState({
@@ -2225,11 +2317,74 @@ function AdvisorInbox({ customers, completedIds, onBack, onCall }) {
   )
 }
 
+function CustomerMemoryCard({ customer, isEditing, form, onChange, onToggleEdit, onSave }) {
+  const memory = buildCustomerMemory(customer)
+  const displayMemory = isEditing ? form : memory
+  const memoryList = (key) => normalizeMemoryList(displayMemory[key])
+
+  return (
+    <article className="card customer-memory-card">
+      <div className="card-head">
+        <h2>💡 Điều cần nhớ</h2>
+        <button className="inline-edit-button" onClick={onToggleEdit}>
+          {isEditing ? 'Đóng' : 'Quick Edit'}
+        </button>
+      </div>
+
+      {isEditing ? (
+        <section className="customer-memory-edit">
+          <div className="memory-edit-grid">
+            {memorySalesSections.map(([key, label, placeholder]) => (
+              <label key={key}>
+                <span>{label}</span>
+                <textarea
+                  value={normalizeMemoryList(form[key]).join('\n')}
+                  onChange={(event) => onChange(key, event.target.value)}
+                  placeholder={placeholder}
+                />
+              </label>
+            ))}
+          </div>
+          <button className="save-snapshot-button" onClick={onSave}>✅ Lưu Điều cần nhớ</button>
+        </section>
+      ) : (
+        <section className="sales-memory-grid">
+          {memorySalesSections.map(([key, label]) => {
+            const items = memoryList(key)
+            return (
+              <section className="sales-memory-section" key={key}>
+                <h3>{label}</h3>
+                {items.length ? (
+                  <ul>
+                    {items.map((item, index) => <li key={`${key}-${item}-${index}`}>{item}</li>)}
+                  </ul>
+                ) : (
+                  <p>Chưa ghi nhận.</p>
+                )}
+              </section>
+            )
+          })}
+        </section>
+      )}
+    </article>
+  )
+}
+
 function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
   const [isCallMode, setIsCallMode] = useState(false)
   const [saveNotice, setSaveNotice] = useState('')
   const [isEditingSnapshot, setIsEditingSnapshot] = useState(false)
+  const [isEditingMemory, setIsEditingMemory] = useState(false)
   const dealEngine = calculateDealScore(customer)
+  const customerMemory = buildCustomerMemory(customer)
+  const [memoryForm, setMemoryForm] = useState({
+    confirmed: { ...customerMemory.confirmed },
+    people: customerMemory.people,
+    family: customerMemory.family,
+    interests: customerMemory.interests,
+    cautions: customerMemory.cautions,
+    specialNotes: customerMemory.specialNotes,
+  })
   const [snapshotForm, setSnapshotForm] = useState({
     confirmedNeed: customer.snapshot.confirmedNeed,
     hypothesis: customer.snapshot.hypothesis,
@@ -2275,6 +2430,31 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
     setIsEditingSnapshot(false)
   }
 
+  const updateMemoryForm = (section, value) => {
+    setMemoryForm((current) => {
+      return {
+        ...current,
+        [section]: normalizeMemoryList(value),
+      }
+    })
+  }
+
+  const saveMemory = () => {
+    onCustomerUpdate(customer.id, {
+      customerMemory: {
+        confirmed: memoryForm.confirmed,
+        people: memoryForm.people,
+        family: memoryForm.family,
+        interests: memoryForm.interests,
+        cautions: memoryForm.cautions,
+        specialNotes: memoryForm.specialNotes,
+        updatedAt: new Date().toISOString(),
+      },
+    })
+    setSaveNotice('Đã lưu Customer Memory')
+    setIsEditingMemory(false)
+  }
+
   if (isCallMode) {
     return (
       <CallMode
@@ -2303,6 +2483,15 @@ function CustomerWorkspace({ customer, onBack, onCustomerUpdate }) {
       </header>
 
       <section className="customer-detail-grid">
+        <CustomerMemoryCard
+          customer={customer}
+          isEditing={isEditingMemory}
+          form={memoryForm}
+          onChange={updateMemoryForm}
+          onToggleEdit={() => setIsEditingMemory((value) => !value)}
+          onSave={saveMemory}
+        />
+
         <article className="card coach-card customer-coach-card">
           <div className="card-head">
             <h2>🧠 Advisor Coach</h2>
@@ -2534,6 +2723,10 @@ function CallReview({ customer, askedCount, onSave }) {
     decisionMaker: 'Anh Minh quyết định chính, vợ có ảnh hưởng.',
     buyingTimeline: 'Trong 1–2 tháng nếu phương án rõ.',
     mainConcern: 'Lo rủi ro và tính thanh khoản.',
+    interestedProject: '',
+    comparingProject: '',
+    customerLikes: '',
+    biggestBarrier: '',
     hypothesis: 'Có thể đang so sánh với gửi tiền hoặc đất nền quen thuộc.',
     knowledge: 'P-0003',
     decision: 'DB-001',
@@ -2543,6 +2736,7 @@ function CallReview({ customer, askedCount, onSave }) {
     followUpQuick: 'Mai',
     salesDNASelected: [],
     salesDNANote: '',
+    longTermMemoryNote: '',
   })
 
   const updateField = (field, value) => {
@@ -2605,6 +2799,22 @@ function CallReview({ customer, askedCount, onSave }) {
             <label>
               <span>Nỗi lo chính</span>
               <textarea className="compact-textarea" value={form.mainConcern} onChange={(event) => updateField('mainConcern', event.target.value)} />
+            </label>
+            <label>
+              <span>Dự án quan tâm</span>
+              <textarea className="compact-textarea" value={form.interestedProject} onChange={(event) => updateField('interestedProject', event.target.value)} />
+            </label>
+            <label>
+              <span>Dự án đang so sánh</span>
+              <textarea className="compact-textarea" value={form.comparingProject} onChange={(event) => updateField('comparingProject', event.target.value)} />
+            </label>
+            <label>
+              <span>Điều khách thích</span>
+              <textarea className="compact-textarea" value={form.customerLikes} onChange={(event) => updateField('customerLikes', event.target.value)} />
+            </label>
+            <label>
+              <span>Barrier lớn nhất</span>
+              <textarea className="compact-textarea" value={form.biggestBarrier} onChange={(event) => updateField('biggestBarrier', event.target.value)} />
             </label>
           </fieldset>
           <label>
@@ -2700,6 +2910,14 @@ function CallReview({ customer, askedCount, onSave }) {
           <strong>Đã hỏi {askedCount}/5 câu Discovery.</strong>
           <span>Knowledge: {form.knowledge} · Decision: {form.decision}</span>
         </div>
+        <label className="long-term-memory-note">
+          <span>💡 Có điều gì về khách mà anh muốn CRM nhớ lâu dài không?</span>
+          <textarea
+            value={form.longTermMemoryNote}
+            onChange={(event) => updateField('longTermMemoryNote', event.target.value)}
+            placeholder={'Ví dụ:\\nLà chủ quán cà phê.\\nRất thân thiện.\\nVợ quyết định.'}
+          />
+        </label>
         <button
           className="call-primary-button"
           onClick={() => onSave({ ...form, confirmedSummary })}

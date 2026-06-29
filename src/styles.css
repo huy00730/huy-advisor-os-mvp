@@ -774,8 +774,199 @@ button {
 
 .deal-health-card,
 .deal-engine-card,
-.sales-dna-widget {
+.sales-dna-widget,
+.customer-memory-card {
   border-left: 8px solid #d98a24;
+}
+
+.customer-memory-card {
+  grid-column: 1 / -1;
+}
+
+.sales-memory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sales-memory-section {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #f7f8f3;
+}
+
+.sales-memory-section:last-child {
+  grid-column: 1 / -1;
+  background: #fff8e8;
+}
+
+.sales-memory-section h3 {
+  margin: 0;
+  color: #173f39;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.sales-memory-section ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: #173f39;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.sales-memory-section p {
+  margin: 0;
+  color: #68766f;
+  font-weight: 850;
+}
+
+.memory-confirmed-list,
+.memory-special-notes,
+.memory-unknown-list,
+.customer-memory-edit {
+  display: grid;
+  gap: 12px;
+}
+
+.memory-confirmed-list h3,
+.memory-special-notes h3,
+.memory-unknown-list h3 {
+  margin: 0;
+  color: #173f39;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.memory-confirmed-list > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.memory-special-notes {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff8e8;
+}
+
+.memory-special-notes ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: #173f39;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+.memory-special-notes p,
+.memory-unknown-list p {
+  margin: 0;
+  color: #68766f;
+  font-weight: 850;
+}
+
+.memory-unknown-list {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #f7f8f3;
+}
+
+.memory-unknown-list > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.memory-unknown-list label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #dfe5dc;
+  border-radius: 999px;
+  background: white;
+  color: #173f39;
+  font-weight: 900;
+}
+
+.memory-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.customer-memory-edit label,
+.memory-special-edit {
+  display: grid;
+  gap: 7px;
+}
+
+.customer-memory-edit span,
+.memory-special-edit span {
+  color: #6d796f;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.customer-memory-edit textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dfe5dc;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fbfbf7;
+  color: #173f39;
+  font: inherit;
+  font-weight: 750;
+  resize: vertical;
+}
+
+.memory-special-edit textarea {
+  min-height: 100px;
+}
+
+.long-term-memory-note {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #f1d79f;
+  border-radius: 20px;
+  background: #fff8e8;
+}
+
+.long-term-memory-note span {
+  color: #9a5c00;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.long-term-memory-note textarea {
+  width: 100%;
+  min-height: 98px;
+  border: 1px solid #f1d79f;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fffdf6;
+  color: #173f39;
+  font: inherit;
+  font-weight: 750;
+  resize: vertical;
 }
 
 .sales-dna-count,
@@ -2833,6 +3024,21 @@ button {
 
   .customer-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .memory-confirmed-list > div,
+  .memory-unknown-list > div,
+  .memory-edit-grid,
+  .sales-memory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-memory-section:last-child {
+    grid-column: auto;
+  }
+
+  .memory-unknown-list label {
+    border-radius: 16px;
   }
 
   .customer-coach-card {
