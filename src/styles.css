@@ -496,6 +496,46 @@ button {
   font-weight: 950;
 }
 
+.dev-reset-demo-tool {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(177, 74, 31, .24);
+  border-radius: 22px;
+  background: #fff3e8;
+  color: #5b2b16;
+}
+
+.dev-reset-demo-tool div {
+  display: grid;
+  gap: 4px;
+}
+
+.dev-reset-demo-tool strong {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.dev-reset-demo-tool span,
+.dev-reset-demo-tool em {
+  color: #7b4b34;
+  font-size: 13px;
+  font-style: normal;
+}
+
+.dev-reset-demo-tool button {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: #9f3412;
+  color: white;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
 .daily-mission-progress {
   position: sticky;
   top: 12px;
@@ -3960,6 +4000,15 @@ button {
 
   .quick-choice-large {
     grid-template-columns: 1fr;
+  }
+
+  .dev-reset-demo-tool {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dev-reset-demo-tool button {
+    width: 100%;
   }
 
   .sales-dna-choice-row {

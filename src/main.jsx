@@ -342,8 +342,10 @@ const INBOX_COMPLETED_KEY = 'huy-advisor-os-inbox-completed-v1'
 const REACTIVATION_KEY = 'huy-advisor-os-reactivation-v1'
 const BACKUP_VERSION = 'huy-advisor-os-go-live-v1'
 const MIGRATION_BACKUP_KEY = 'huy-advisor-os-last-migration-backup-key'
+const DEMO_DATA_RESET_KEY = 'huy-advisor-os-demo-data-reset-v1'
 const COASTAL_200_BACKUP_ID = 'b037bb6a-ac45-45c1-9f32-ec02158e5a91'
 const COASTAL_200_BACKUP_URL = `https://huy-sales-os.pages.dev/api/backup?id=${COASTAL_200_BACKUP_ID}`
+const DEMO_CUSTOMER_IDS = new Set(['minh', 'lan', 'quan', 'hoa', 'nam', 'thao', 'phuc', 'mai', 'khanh', 'vy'])
 
 const todayIso = '2026-06-29'
 const reactivationBatchSize = 10
@@ -590,19 +592,29 @@ function buildSeedCustomers() {
   return [...priorityCustomers, ...extraCustomers].map(normalizeCustomer)
 }
 
+function hasDemoDataBeenReset() {
+  return localStorage.getItem(DEMO_DATA_RESET_KEY) === '1'
+}
+
+function isDemoCustomer(customer) {
+  return DEMO_CUSTOMER_IDS.has(customer?.id) || String(customer?.name || '').trim().startsWith('ZZZ')
+}
+
 function loadCustomers() {
   try {
     const raw = localStorage.getItem(CUSTOMER_STORE_KEY)
     if (!raw) {
+      if (hasDemoDataBeenReset()) return []
       const seeded = buildSeedCustomers()
       localStorage.setItem(CUSTOMER_STORE_KEY, JSON.stringify(seeded))
       return seeded
     }
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed) || parsed.length === 0) return buildSeedCustomers()
+    if (!Array.isArray(parsed)) return hasDemoDataBeenReset() ? [] : buildSeedCustomers()
+    if (parsed.length === 0) return hasDemoDataBeenReset() ? [] : buildSeedCustomers()
     return parsed.map(normalizeCustomer)
   } catch {
-    return buildSeedCustomers()
+    return hasDemoDataBeenReset() ? [] : buildSeedCustomers()
   }
 }
 
@@ -1583,6 +1595,30 @@ function App() {
     }
   }
 
+  const handleResetDemoData = () => {
+    const confirmed = window.confirm('Thao tác này sẽ xóa toàn bộ dữ liệu DEMO khỏi Customer Store.\n\nKhông dùng cho dữ liệu khách thật.\n\nBạn chắc chắn muốn tiếp tục?')
+    if (!confirmed) {
+      setBackupNotice('Đã hủy Reset Demo Data. Customer Store giữ nguyên.')
+      return
+    }
+
+    const phrase = window.prompt('Nhập chính xác RESET DEMO để xác nhận xóa dữ liệu demo.')
+    if (phrase !== 'RESET DEMO') {
+      setBackupNotice('Reset Demo Data không thực hiện vì mã xác nhận không đúng.')
+      return
+    }
+
+    const nextCustomers = customers.filter((customer) => !isDemoCustomer(customer))
+    localStorage.setItem(DEMO_DATA_RESET_KEY, '1')
+    saveCustomers(nextCustomers)
+    setCustomers(nextCustomers.map(normalizeCustomer))
+    setSelectedCustomerId(null)
+    setDirectCallCustomerId(null)
+    setInboxCall(null)
+    setActiveView('dailyFlow')
+    setBackupNotice(`Đã xóa ${customers.length - nextCustomers.length} khách demo. Customer Store còn ${nextCustomers.length} khách.`)
+  }
+
   const updateCandidateStatus = (candidateId, status) => {
     setKnowledgeCandidates(updateKnowledgeCandidateStatus(candidateId, status))
   }
@@ -1664,7 +1700,7 @@ function App() {
   }
 
   if (activeView === 'dailyFlow') {
-    return <TodayFlow customers={activeCustomers} onCustomerUpdate={updateCustomer} onCustomerArchive={archiveCustomer} onAddCustomer={() => setActiveView('customerForm')} onKnowledgeSearch={() => setActiveView('knowledgeSearch')} onInbox={() => setActiveView('inbox')} onFollowUp={() => setActiveView('followup')} onExportBackup={handleExportBackup} onImportBackup={handleImportBackup} backupNotice={backupNotice} migrationStatus={migrationStatus} onExit={() => setActiveView('today')} />
+    return <TodayFlow customers={activeCustomers} onCustomerUpdate={updateCustomer} onCustomerArchive={archiveCustomer} onAddCustomer={() => setActiveView('customerForm')} onKnowledgeSearch={() => setActiveView('knowledgeSearch')} onInbox={() => setActiveView('inbox')} onFollowUp={() => setActiveView('followup')} onExportBackup={handleExportBackup} onImportBackup={handleImportBackup} backupNotice={backupNotice} migrationStatus={migrationStatus} developerMode={developerMode} onResetDemoData={handleResetDemoData} onExit={() => setActiveView('today')} />
   }
 
   return (
@@ -1691,10 +1727,17 @@ function App() {
         onImport={handleImportBackup}
       />
       {developerMode && (
-        <KnowledgeCandidateCenter
-          candidates={knowledgeCandidates}
-          onStatusChange={updateCandidateStatus}
-        />
+        <>
+          <ResetDemoDataTool
+            activeCount={activeCustomers.length}
+            demoCount={customers.filter(isDemoCustomer).length}
+            onReset={handleResetDemoData}
+          />
+          <KnowledgeCandidateCenter
+            candidates={knowledgeCandidates}
+            onStatusChange={updateCandidateStatus}
+          />
+        </>
       )}
 
       <section className="workspace-grid">
@@ -2076,6 +2119,19 @@ function BackupControls({ customerCount, notice, onExport, onImport }) {
   )
 }
 
+function ResetDemoDataTool({ activeCount, demoCount, onReset }) {
+  return (
+    <section className="dev-reset-demo-tool" aria-label="Reset Demo Data">
+      <div>
+        <strong>⚠️ Reset Demo Data</strong>
+        <span>Developer Mode · {demoCount} demo / {activeCount} khách đang hiển thị</span>
+        <em>Chỉ dùng trước Go-Live để đưa CRM về trạng thái READY FOR IMPORT.</em>
+      </div>
+      <button type="button" onClick={onReset}>⚠️ Reset Demo Data</button>
+    </section>
+  )
+}
+
 function DailyMissionProgress({ progress }) {
   return (
     <section className="daily-mission-progress" aria-label="Daily Mission Progress">
@@ -2188,7 +2244,7 @@ function SmartCallBrief({ customer, stepLabel, onBack, onStartCall }) {
   )
 }
 
-function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, onExit }) {
+function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustomer, onKnowledgeSearch, onInbox, onFollowUp, onExportBackup, onImportBackup, backupNotice, migrationStatus, developerMode, onResetDemoData, onExit }) {
   const flowCustomers = customers.slice(0, 10)
   const [step, setStep] = useState('morning')
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -2354,6 +2410,13 @@ function TodayFlow({ customers, onCustomerUpdate, onCustomerArchive, onAddCustom
             onExport={onExportBackup}
             onImport={onImportBackup}
           />
+          {developerMode && (
+            <ResetDemoDataTool
+              activeCount={customers.length}
+              demoCount={customers.filter(isDemoCustomer).length}
+              onReset={onResetDemoData}
+            />
+          )}
           <article className="flow-sales-dna-widget">
             <span>🧬 Sales DNA Collected</span>
             <strong>Hôm nay: {dailyStats.salesDNA.length} kinh nghiệm mới</strong>
